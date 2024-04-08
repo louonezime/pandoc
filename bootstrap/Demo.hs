@@ -73,8 +73,32 @@ parseAnd :: Parser a -> Parser b -> Parser (a,b)
 parseAnd fct1 fct2 str =
     fct1 str >>= (\(a, b) -> fct2 b >>= (\(c, b) -> Right((a, c), b)))
 
--- FUNCTOR
+-- Step 1.2.3
 
+parseAndWith :: (a -> b -> c) -> Parser a -> Parser b -> Parser c
+parseAndWith ord fct1 fct2 str =
+    fct1 str >>= (\(a, b) -> fct2 b >>= (\(c, b) -> Right(ord a c, b)))
+
+-- Step 1.2.4
+
+parseMany :: Parser a -> Parser [a]
+parseMany fct (x:xs) = case fct (x:xs) of
+    Right (a, b) -> case parseMany fct b of
+        Right (c, d) -> Right (a:c, d)
+        Left _ -> Right ([a], b)
+    Left _ -> Right ([], x:xs)
+
+-- Step 1.2.5
+
+-- parseSome :: Parser a -> Parser [a]
+-- parseSome fct (x:xs) = case fct (x:xs) of
+--     Right (a, b) -> case parseSome fct b of
+--         Right (c, d) -> Right (a:c, d)
+--         Left _ -> Right ([a], b)
+--     Left _ -> Right ([], x:xs)
+
+
+-- FUNCTOR
 -- parseAnd :: Parser a -> Parser b -> Parser (a,b)
 -- -- new parser with runparser fc in parser type
 -- <*>
