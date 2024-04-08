@@ -8,7 +8,8 @@
 import Control.Applicative (Alternative((<|>), empty))
 import Data.Maybe(isNothing)
 
--- MAYBE - Step 1.1.1
+-- MAYBE
+-- Step 1.1.1
 
 type ParserA a = String -> Maybe (a, String)
 
@@ -17,7 +18,7 @@ parseCharA _ [] = Nothing
 parseCharA c (x:xs) | c == x = Just (c, xs)
                     | otherwise = Nothing
 
--- MAYBE - Step 1.1.2
+-- Step 1.1.2
 
 parseAnyCharA :: String -> ParserA Char
 parseAnyCharA [] _ = Nothing
@@ -27,26 +28,50 @@ parseAnyCharA (h:t) (x:xs)
     | otherwise = parseAnyCharA t (x:xs)
 
 -- EITHER
+-- Step 1.1.1
 
 type Parser a = String -> Either String (a, String)
 
 parseChar :: Char -> Parser Char
 parseChar _ [] = Left "empty string"
 parseChar c (x:xs) | c == x = Right (x, xs)
-                   | otherwise = Left (c: "not found")
+                   | otherwise = Left (c: ": not found")
 
-parseAnyCharB :: String -> Parser Char
-parseAnyCharB [] _ = Left "empty string"
-parseAnyCharB _ [] = Left "empty string"
-parseAnyCharB (h:t) (x:xs) | h == x = Right (x, xs)
-                          | otherwise = parseAnyCharB t xs
+-- Step 1.1.2
 
 parseAnyChar :: String -> Parser Char
 parseAnyChar [] _ = Left "empty string"
 parseAnyChar _ [] = Left "empty string"
 parseAnyChar str (h:t) | True `elem` find = Right(h,t)
-    | otherwise = Left (str ++ " not found")
+    | otherwise = Left (str ++ ": not found")
     where find = map (==h) str
+
+-- Step 1.2.1
+
+parseOrA :: ParserA a -> ParserA a -> ParserA a
+parseOrA fct1 fct2 str = case fct1 str of
+    Just res -> Just res
+    Nothing -> fct2 str
+
+parseOr :: Parser a -> Parser a -> Parser a
+parseOr fct1 fct2 str = case fct1 str of
+    Right res -> Right res
+    Left _ -> fct2 str
+
+-- parseAnyCharAlias :: String -> Parser Char
+
+-- Step 1.2.2
+
+parseAndA :: Parser a -> Parser b -> Parser (a,b)
+parseAndA fct1 fct2 str = case fct1 str of
+    Right (res, rest) -> case fct2 rest of
+        Right (res1, rest) -> Right((res, res1), rest)
+        Left err -> Left err
+    Left err -> Left err
+
+-- parseAnd :: Parser a -> Parser b -> Parser (a,b)
+-- parseAnd fct1 fct2 str =
+
 
 -- CASE OF
 
