@@ -7,7 +7,8 @@
 
 import Control.Applicative (Alternative((<|>), empty))
 import Data.Maybe(isNothing)
-import Text.Read
+import Text.Read (readMaybe)
+import Data.Char (isDigit)
 
 -- MAYBE
 -- Step 1.1.1
@@ -102,26 +103,45 @@ parseSome fct (x:xs) = case fct (x:xs) of
 
 type ParserI a = String -> Either String Int
 
-parseUInt :: ParserI Int -- parse an unsigned Int
-parseUInt [] = Left "no unsigned int"
-parseUInt (x:xs) = case readMaybe (x:xs) of
+parseUIntA :: ParserI Int -- parse an unsigned Int
+parseUIntA [] = Left "no unsigned int"
+parseUIntA (x:xs) = case readMaybe (x:xs) of
     Just a -> if a < 0 then (Left "no unsigned int") else (Right a)
     Nothing -> Left "no unsigned int"
 
-parseInt :: ParserI Int -- parse an signed Int
-parseInt [] = Left "no signed int"
-parseInt (x:xs) = case readMaybe (x:xs) of
+parseIntA :: ParserI Int -- parse an signed Int
+parseIntA [] = Left "no signed int"
+parseIntA (x:xs) = case readMaybe (x:xs) of
     Just a -> Right a
     Nothing -> Left "no unsigned int"
 
-parseTuple :: Parser a -> Parser (a, a) -- parse a tuple
-parseTuple fct str = case fct str of
-    Right (a, b) -> case parseChar ',' b of
-        Right (_, c) -> case fct c of
-            Right (d, e) -> Right ((a, d), e)
-            Left err -> Left err
-        Left err -> Left err
+parseUInt :: Parser Int -- parse an unsigned Int
+parseUInt "" = Left "no unsigned int"
+parseUInt str = case span isDigit str of
+    ("", _) -> Left "no digit"
+    (digits, rest) -> Right (read digits, rest)
+
+parseInt :: Parser Int -- parse an signed Int
+parseInt "" = Left "no signed int"
+parseInt ('+':rest) = parseUInt rest
+parseInt ('-':rest) = case parseUInt rest of
+    Right (n, rest') -> Right ((-n), rest')
     Left err -> Left err
+parseInt str = parseUInt str
+
+parseTuple :: Parser a -> Parser (a, a)
+parseTuple fct str = do
+    (first, str') <- fct str
+    case str' of
+        ',':str'' -> do
+            (second, str''') <- fct str''
+            return ((first, second), str''')
+        _ -> Left "Expected ','"
+
+-- data ParserS a = ParserS {
+--     runParser :: String -> Either (a, String)
+-- }
+
 
 -- FUNCTOR
 -- parseAnd :: Parser a -> Parser b -> Parser (a,b)
