@@ -1,14 +1,30 @@
+{-
+-- EPITECH PROJECT, 2024
+-- pandoc
+-- File description:
+-- Demo
+-}
+
 import Control.Applicative (Alternative((<|>), empty))
 import Data.Maybe(isNothing)
 
--- MAYBE
+-- MAYBE - Step 1.1.1
 
--- type Parser a = String -> Maybe (a, String)
+type ParserA a = String -> Maybe (a, String)
 
--- parseChar :: Char -> Parser Char
--- parseChar _ [] = Nothing
--- parseChar c (x:xs) | c == x = Just (c, xs)
-                --    | otherwise = Nothing
+parseCharA :: Char -> ParserA Char
+parseCharA _ [] = Nothing
+parseCharA c (x:xs) | c == x = Just (c, xs)
+                    | otherwise = Nothing
+
+-- MAYBE - Step 1.1.2
+
+parseAnyCharA :: String -> ParserA Char
+parseAnyCharA [] _ = Nothing
+parseAnyCharA _ [] = Nothing
+parseAnyCharA (h:t) (x:xs)
+    | x == h = Just (x, xs)
+    | otherwise = parseAnyCharA t (x:xs)
 
 -- EITHER
 
@@ -19,11 +35,11 @@ parseChar _ [] = Left "empty string"
 parseChar c (x:xs) | c == x = Right (x, xs)
                    | otherwise = Left (c: "not found")
 
--- parseAnyChar :: String -> Parser Char
--- parseAnyChar [] _ = Left "empty string"
--- parseAnyChar _ [] = Left "empty string"
--- parseAnyChar (h:t) (x:xs) | h == x = Right (x, xs)
---                           | otherwise = parseAnyChar t xs
+parseAnyCharB :: String -> Parser Char
+parseAnyCharB [] _ = Left "empty string"
+parseAnyCharB _ [] = Left "empty string"
+parseAnyCharB (h:t) (x:xs) | h == x = Right (x, xs)
+                          | otherwise = parseAnyCharB t xs
 
 parseAnyChar :: String -> Parser Char
 parseAnyChar [] _ = Left "empty string"
@@ -48,10 +64,10 @@ parseAnyChar str (h:t) | True `elem` find = Right(h,t)
 
 -- FUNCTOR
 
-parseAnd :: Parser a -> Parser b -> Parser (a,b)
--- new parser with runparser fc in parser type
-<*>
-<$>
-parserAnd fct1 fct2 = (,) <$> fct1 <*> fct2
+-- parseAnd :: Parser a -> Parser b -> Parser (a,b)
+-- -- new parser with runparser fc in parser type
+-- <*>
+-- <$>
+-- parserAnd fct1 fct2 = (,) <$> fct1 <*> fct2
 
-parseAnd fct1 fct1 =
+-- parseAnd fct1 fct1 =
