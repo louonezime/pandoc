@@ -64,28 +64,14 @@ parseOr fct1 fct2 str = case fct1 str of
 
 parseAndA :: Parser a -> Parser b -> Parser (a,b)
 parseAndA fct1 fct2 str = case fct1 str of
-    Right (res, rest) -> case fct2 rest of
-        Right (res1, rest) -> Right((res, res1), rest)
+    Right (a, b) -> case fct2 b of
+        Right (c, b) -> Right((a, c), b)
         Left err -> Left err
     Left err -> Left err
 
--- parseAnd :: Parser a -> Parser b -> Parser (a,b)
--- parseAnd fct1 fct2 str =
-
-
--- CASE OF
-
--- parseAnd :: Parser a -> Parser b -> Parser (a,b)
--- parseAnd fct1 fct2 str = case fct1 str of
---     Right (res, rest) -> case fct2 rest of
---         Right (res1, rest) -> Right((res, res1), rest)
---         Left err -> Left err
---     Left err -> Left err
-
--- BIND + LAMBDA
-
--- parseAnd :: Parser a -> Parser b -> Parser (a,b)
--- parseAnd fct1 fct2 str = fct1 str >>= (\(res, rest) -> fct2 rest >>= (\(res1, rest) -> Right((res, res1), rest)))
+parseAnd :: Parser a -> Parser b -> Parser (a,b)
+parseAnd fct1 fct2 str =
+    fct1 str >>= (\(a, b) -> fct2 b >>= (\(c, b) -> Right((a, c), b)))
 
 -- FUNCTOR
 
