@@ -1,0 +1,12 @@
+#dependencies
+.stack-work
+*.lock
+
+#editors
+.vscode
+.idea
+.cache
+
+*.json
+*.log
+*.cabal
