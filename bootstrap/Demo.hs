@@ -7,6 +7,7 @@
 
 import Control.Applicative (Alternative((<|>), empty))
 import Data.Maybe(isNothing)
+import Text.Read
 
 -- MAYBE
 -- Step 1.1.1
@@ -97,6 +98,30 @@ parseSome fct (x:xs) = case fct (x:xs) of
         Left _ -> Right ([a], b)
     Left err -> Left err
 
+-- Step 1.3.1
+
+type ParserI a = String -> Either String Int
+
+parseUInt :: ParserI Int -- parse an unsigned Int
+parseUInt [] = Left "no unsigned int"
+parseUInt (x:xs) = case readMaybe (x:xs) of
+    Just a -> if a < 0 then (Left "no unsigned int") else (Right a)
+    Nothing -> Left "no unsigned int"
+
+parseInt :: ParserI Int -- parse an signed Int
+parseInt [] = Left "no signed int"
+parseInt (x:xs) = case readMaybe (x:xs) of
+    Just a -> Right a
+    Nothing -> Left "no unsigned int"
+
+parseTuple :: Parser a -> Parser (a, a) -- parse a tuple
+parseTuple fct str = case fct str of
+    Right (a, b) -> case parseChar ',' b of
+        Right (_, c) -> case fct c of
+            Right (d, e) -> Right ((a, d), e)
+            Left err -> Left err
+        Left err -> Left err
+    Left err -> Left err
 
 -- FUNCTOR
 -- parseAnd :: Parser a -> Parser b -> Parser (a,b)
