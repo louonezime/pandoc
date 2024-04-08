@@ -90,12 +90,12 @@ parseMany fct (x:xs) = case fct (x:xs) of
 
 -- Step 1.2.5
 
--- parseSome :: Parser a -> Parser [a]
--- parseSome fct (x:xs) = case fct (x:xs) of
---     Right (a, b) -> case parseSome fct b of
---         Right (c, d) -> Right (a:c, d)
---         Left _ -> Right ([a], b)
---     Left _ -> Right ([], x:xs)
+parseSome :: Parser a -> Parser [a]
+parseSome fct (x:xs) = case fct (x:xs) of
+    Right (a, b) -> case parseSome fct b of
+        Right (c, d) -> Right (a:c, d)
+        Left _ -> Right ([a], b)
+    Left err -> Left err
 
 
 -- FUNCTOR
