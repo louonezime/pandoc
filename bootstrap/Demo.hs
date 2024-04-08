@@ -139,10 +139,11 @@ parseTuple pa str = do
                 _ -> Left "expected comma ','"
         _ -> Left "expected opening parenthesis '('"
 
--- data ParserS a = ParserS {
---     runParser :: String -> Either (a, String)
--- }
+-- Step 2.1
 
+data ParserS a = ParserS {
+    runParser :: String -> Either String (a, String)
+}
 
 -- FUNCTOR
 -- parseAnd :: Parser a -> Parser b -> Parser (a,b)
