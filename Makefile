@@ -6,7 +6,7 @@
 ##
 
 BIN_PATH = $(shell stack path --local-install-root)
-NAME = pandoc
+NAME = mypandoc
 
 all: $(NAME)
 
