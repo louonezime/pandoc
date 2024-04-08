@@ -8,7 +8,7 @@
 import Control.Applicative (Alternative((<|>), empty))
 import Data.Maybe(isNothing)
 import Text.Read (readMaybe)
-import Data.Char (isDigit)
+import Data.Char (isDigit, isSpace)
 
 -- MAYBE
 -- Step 1.1.1
@@ -49,11 +49,6 @@ parseAnyChar str (h:t) | True `elem` find = Right(h,t)
     where find = map (==h) str
 
 -- Step 1.2.1
-
-parseOrA :: ParserA a -> ParserA a -> ParserA a
-parseOrA fct1 fct2 str = case fct1 str of
-    Just res -> Just res
-    Nothing -> fct2 str
 
 parseOr :: Parser a -> Parser a -> Parser a
 parseOr fct1 fct2 str = case fct1 str of
@@ -130,13 +125,19 @@ parseInt ('-':rest) = case parseUInt rest of
 parseInt str = parseUInt str
 
 parseTuple :: Parser a -> Parser (a, a)
-parseTuple fct str = do
-    (first, str') <- fct str
-    case str' of
-        ',':str'' -> do
-            (second, str''') <- fct str''
-            return ((first, second), str''')
-        _ -> Left "Expected ','"
+parseTuple pa str = do
+    let trimmed = dropWhile isSpace str
+    case trimmed of
+        ('(':rest1) -> do
+            (val1, rest2) <- pa (dropWhile isSpace rest1)
+            case rest2 of
+                (',':rest3) -> do
+                    (val2, rest4) <- pa (dropWhile isSpace rest3)
+                    case rest4 of
+                        (')':rest5) -> Right ((val1, val2), rest5)
+                        _ -> Left "expected closing parenthesis ')'"
+                _ -> Left "expected comma ','"
+        _ -> Left "expected opening parenthesis '('"
 
 -- data ParserS a = ParserS {
 --     runParser :: String -> Either (a, String)
