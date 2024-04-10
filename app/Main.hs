@@ -8,7 +8,7 @@
 module Main (main) where
 
 import System.Environment (getArgs)
-import System.Exit (exitWith, ExitCode(ExitFailure))
+import System.Exit (ExitCode (ExitFailure), exitWith)
 import System.IO (hPutStrLn, stderr)
 
 import Lib (Options, defaultOptions, options)
