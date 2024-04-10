@@ -5,7 +5,7 @@
 -- Lib
 -}
 
-module Document () where
+module Document (Header (..), Entry (..), Document (..)) where
 
 data Header = Header
     { title :: String,
@@ -54,5 +54,3 @@ data Document = Document
     { header :: Header,
       body :: [Entry]
     }
-
-
