@@ -18,8 +18,7 @@ module Parsing
     , parseInt
     , parseTuple
     , parseQuotes
-    , parseNonLetters
-    , parseWhiteSpace
+    , parseSeparators
     , Parser(..)
     , connect) where
 
@@ -129,12 +128,8 @@ parseNonStr str = Parser $ \s ->
         (x:xs) | x `notElem` str -> Right (x, xs)
         _ -> Left (str ++ ": found")
 
-parseNonLetters :: Parser String
-parseNonLetters =
-    parseSome (parseOr (parseAnyChar ['a'..'z']) (parseAnyChar ['A'..'Z']))
-
-parseWhiteSpace :: Parser String
-parseWhiteSpace = parseSome (parseAnyChar " \t\n")
+parseSeparators :: Parser String
+parseSeparators = parseSome (parseAnyChar " \t\n")
 
 connect :: a -> [a] -> [a]
 connect x xs = x:xs
