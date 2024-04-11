@@ -68,19 +68,12 @@ parseSomeChar :: String -> Parser Char
 parseSomeChar = foldr (\c -> (<|>) (parseChar c)) empty
 
 parseOr :: Parser a -> Parser a -> Parser a
-parseOr p1 p2 = Parser $ \str ->
-    case runParser p1 str of
-        Right (x, xs) -> Right (x, xs)
-        Left _ -> runParser p2 str
+parseOr (Parser p1) (Parser p2) =
+    Parser $ \str -> either (const (p2 str)) Right (p1 str)
 
 parseAnd :: Parser a -> Parser b -> Parser (a, b)
-parseAnd p1 p2 = Parser $ \str ->
-    case runParser p1 str of
-        Right (x, xs) ->
-            case runParser p2 xs of
-                Right (y, ys) -> Right ((x, y), ys)
-                Left err -> Left err
-        Left errb -> Left errb
+parseAnd (Parser p1) (Parser p2) = Parser $ \str ->
+  p1 str >>= \(x, s1) -> p2 s1 >>= \(y, s2) -> Right ((x, y), s2)
 
 parseAndWith :: (a -> b -> c) -> Parser a -> Parser b -> Parser c
 parseAndWith f p1 p2 = Parser $ \str ->
