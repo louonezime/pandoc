@@ -9,8 +9,8 @@ module Document (Header (..), Entry (..), Document (..)) where
 
 data Header = Header
     { title :: String,
-      author :: String,
-      date :: String
+      author :: Maybe String,
+      date :: Maybe String
     }
     deriving (Show)
 
