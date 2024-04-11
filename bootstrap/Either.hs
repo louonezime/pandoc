@@ -10,25 +10,6 @@ import Data.Maybe(isNothing)
 import Text.Read (readMaybe)
 import Data.Char (isDigit, isSpace)
 
--- MAYBE
--- Step 1.1.1
-
-type ParserA a = String -> Maybe (a, String)
-
-parseCharA :: Char -> ParserA Char
-parseCharA _ [] = Nothing
-parseCharA c (x:xs) | c == x = Just (c, xs)
-                    | otherwise = Nothing
-
--- Step 1.1.2
-
-parseAnyCharA :: String -> ParserA Char
-parseAnyCharA [] _ = Nothing
-parseAnyCharA _ [] = Nothing
-parseAnyCharA (h:t) (x:xs)
-    | x == h = Just (x, xs)
-    | otherwise = parseAnyCharA t (x:xs)
-
 -- EITHER
 -- Step 1.1.1
 
@@ -59,16 +40,18 @@ parseOr fct1 fct2 str = case fct1 str of
 
 -- Step 1.2.2
 
+parseAnd :: Parser a -> Parser b -> Parser (a,b)
+parseAnd fct1 fct2 str =
+    fct1 str >>= (\(a, b) -> fct2 b >>= (\(c, b) -> Right((a, c), b)))
+
+--equivalent of
+
 parseAndA :: Parser a -> Parser b -> Parser (a,b)
 parseAndA fct1 fct2 str = case fct1 str of
     Right (a, b) -> case fct2 b of
         Right (c, b) -> Right((a, c), b)
         Left err -> Left err
     Left err -> Left err
-
-parseAnd :: Parser a -> Parser b -> Parser (a,b)
-parseAnd fct1 fct2 str =
-    fct1 str >>= (\(a, b) -> fct2 b >>= (\(c, b) -> Right((a, c), b)))
 
 -- Step 1.2.3
 
@@ -95,20 +78,6 @@ parseSome fct (x:xs) = case fct (x:xs) of
     Left err -> Left err
 
 -- Step 1.3.1
-
-type ParserI a = String -> Either String Int
-
-parseUIntA :: ParserI Int -- parse an unsigned Int
-parseUIntA [] = Left "no unsigned int"
-parseUIntA (x:xs) = case readMaybe (x:xs) of
-    Just a -> if a < 0 then (Left "no unsigned int") else (Right a)
-    Nothing -> Left "no unsigned int"
-
-parseIntA :: ParserI Int -- parse an signed Int
-parseIntA [] = Left "no signed int"
-parseIntA (x:xs) = case readMaybe (x:xs) of
-    Just a -> Right a
-    Nothing -> Left "no unsigned int"
 
 parseUInt :: Parser Int -- parse an unsigned Int
 parseUInt "" = Left "no unsigned int"
@@ -139,11 +108,23 @@ parseTuple pa str = do
                 _ -> Left "expected comma ','"
         _ -> Left "expected opening parenthesis '('"
 
--- Step 2.1
+type ParserI a = String -> Either String Int
 
-data ParserS a = ParserS {
-    runParser :: String -> Either String (a, String)
-}
+parseUIntA :: ParserI Int -- parse an unsigned Int
+parseUIntA [] = Left "no unsigned int"
+parseUIntA (x:xs) = case readMaybe (x:xs) of
+    Just a -> if a < 0 then (Left "no unsigned int") else (Right a)
+    Nothing -> Left "no unsigned int"
+
+parseIntA :: ParserI Int -- parse an signed Int
+parseIntA [] = Left "no signed int"
+parseIntA (x:xs) = case readMaybe (x:xs) of
+    Just a -> Right a
+    Nothing -> Left "no unsigned int"
+
+-- Step 2.1 (Parser.hs)
+
+-- Notes from Demo:
 
 -- FUNCTOR
 -- parseAnd :: Parser a -> Parser b -> Parser (a,b)
