@@ -7,7 +7,15 @@
 
 module Main (main) where
 
-import Lib
+import System.Environment (getArgs)
+import System.Exit (ExitCode (ExitFailure), exitWith)
+import System.IO (hPutStrLn, stderr)
+
+import Lib (Options, defaultOptions, options)
+
+checkErrors :: Either String Options -> IO ()
+checkErrors (Right o) = print o
+checkErrors (Left s) = hPutStrLn stderr s >> exitWith (ExitFailure 84)
 
 main :: IO ()
-main = someFunc
+main = getArgs >>= checkErrors . options defaultOptions
