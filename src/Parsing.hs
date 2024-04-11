@@ -1,6 +1,6 @@
 {-
 -- EPITECH PROJECT, 2024
--- bootstrap
+-- pandoc
 -- File description:
 -- Parser
 -}
