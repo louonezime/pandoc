@@ -5,31 +5,32 @@
 -- Parser
 -}
 
-module Parsing
-    ( parseChar
-    , parseAnyChar
-    , parseSomeChar
-    , parseOr
-    , parseAnd
-    , parseAndWith
-    , parseMany
-    , parseSome
-    , parseUInt
-    , parseInt
-    , parseTuple
-    , parseQuotes
-    , parseSeparators
-    , Parser(..)
-    , connect) where
+module Parsing (
+    parseChar,
+    parseAnyChar,
+    parseSomeChar,
+    parseOr,
+    parseAnd,
+    parseAndWith,
+    parseMany,
+    parseSome,
+    parseUInt,
+    parseInt,
+    parseTuple,
+    parseQuotes,
+    parseSeparators,
+    Parser (..),
+) where
 
 import Control.Applicative (Alternative (..))
+import Control.Monad ((>=>))
 
-newtype Parser a = Parser {
-    runParser :: String -> Either String (a, String)
-}
+newtype Parser a = Parser
+    { runParser :: String -> Either String (a, String)
+    }
 
 instance Functor Parser where
-  fmap f (Parser p) = Parser $ \str -> fmap (\(x, s) -> (f x, s)) (p str)
+    fmap f (Parser p) = Parser $ \str -> fmap (\(x, s) -> (f x, s)) (p str)
 
 instance Applicative Parser where
     pure x = Parser $ \str -> Right (x, str)
@@ -55,25 +56,26 @@ instance Monad Parser where
 parseChar :: Char -> Parser Char
 parseChar c = Parser $ \str ->
     case str of
-        (x:xs) | c == x -> Right (c, xs)
-        _ -> Left (c: ": not found")
+        (x : xs) | c == x -> Right (c, xs)
+        _ -> Left (c : ": not found")
 
 parseAnyChar :: String -> Parser Char
 parseAnyChar str = Parser $ \s ->
     case s of
-        (x:xs) | x `elem` str -> Right (x, xs)
+        (x : xs) | x `elem` str -> Right (x, xs)
         _ -> Left (str ++ ": not found")
 
 parseSomeChar :: String -> Parser Char
-parseSomeChar = foldr (\c -> (<|>) (parseChar c)) empty
+parseSomeChar = foldr ((<|>) . parseChar) empty
 
 parseOr :: Parser a -> Parser a -> Parser a
 parseOr (Parser p1) (Parser p2) =
     Parser $ \str -> either (const (p2 str)) Right (p1 str)
 
 parseAnd :: Parser a -> Parser b -> Parser (a, b)
-parseAnd (Parser p1) (Parser p2) = Parser $ \str ->
-  p1 str >>= \(x, s1) -> p2 s1 >>= \(y, s2) -> Right ((x, y), s2)
+parseAnd (Parser p1) (Parser p2) = Parser (
+        p1 >=> \(x, s1) -> p2 s1 >>= \(y, s2) -> Right ((x, y), s2)
+    )
 
 parseAndWith :: (a -> b -> c) -> Parser a -> Parser b -> Parser c
 parseAndWith f p1 p2 = Parser $ \str ->
@@ -89,7 +91,7 @@ parseMany p = Parser $ \str ->
     case runParser p str of
         Right (x, xs) ->
             case runParser (parseMany p) xs of
-                Right (y, ys) -> Right (x:y, ys)
+                Right (y, ys) -> Right (x : y, ys)
                 Left _ -> Right ([x], xs)
         Left _ -> Right ([], str)
 
@@ -101,14 +103,15 @@ parseUInt = read <$> parseSome (parseAnyChar "0123456789")
 
 parseInt :: Parser Int
 parseInt =
-  fmap read (parseNumbers <|> connect <$> parseChar '-' <*> parseNumbers)
+    fmap read (parseNumbers <|> (:) <$> parseChar '-' <*> parseNumbers)
 
 parseNumbers :: Parser String
-parseNumbers = some (parseSomeChar ['0'..'9'])
+parseNumbers = some (parseSomeChar ['0' .. '9'])
 
 parseTuple :: Parser a -> Parser (a, a)
-parseTuple p = parseChar '(' *> parseAnd p (parseChar ',')
-    >>= \(x, _) -> parseAnd p (parseChar ')') >>= \(y, _) -> return (x, y)
+parseTuple p =
+    parseChar '(' *> parseAnd p (parseChar ',')
+        >>= \(x, _) -> parseAnd p (parseChar ')') >>= \(y, _) -> return (x, y)
 
 parseQuotes :: Parser String
 parseQuotes = parseChar '\"' *> parseSome (parseNonStr "\"") <* parseChar '\"'
@@ -116,11 +119,8 @@ parseQuotes = parseChar '\"' *> parseSome (parseNonStr "\"") <* parseChar '\"'
 parseNonStr :: String -> Parser Char
 parseNonStr str = Parser $ \s ->
     case s of
-        (x:xs) | x `notElem` str -> Right (x, xs)
+        (x : xs) | x `notElem` str -> Right (x, xs)
         _ -> Left (str ++ ": found")
 
 parseSeparators :: Parser String
 parseSeparators = parseSome (parseAnyChar " \t\n")
-
-connect :: a -> [a] -> [a]
-connect x xs = x:xs
