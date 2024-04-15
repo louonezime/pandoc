@@ -39,7 +39,9 @@ library:
 executables:
   mypandoc-exe:
     main:                Main.hs
-    source-dirs:         app
+    source-dirs:
+      - app
+      - app/display
     ghc-options:
     - -threaded
     - -rtsopts
