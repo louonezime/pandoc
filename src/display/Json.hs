@@ -48,7 +48,7 @@ renderEntry (CodeBlock c) = renderCodeBlock c
 renderEntry (Bold b) = renderBold b
 renderEntry (Italic i) = renderItalic i 
 renderEntry (Code c) = renderCode c
-renderEntry _ = "null"
+renderEntry (Image i a) = renderImage i a
 
 renderSection :: String -> [Entry] -> String
 renderSection t e = "{\"section\":{\"title\":\"" ++ t ++ "\",\"content\":" ++ renderList e ++ "}}"
@@ -77,4 +77,7 @@ renderItalic e = "{\"italic\":" ++ renderEntry e ++ "}"
 
 renderCode :: Entry -> String
 renderCode e = "{\"code\":" ++ renderEntry e ++ "}"
+
+renderImage :: Entry -> [Entry] -> String
+renderImage ul at = "{\"image\":{\"url\":" ++ renderEntry ul ++ ",\"alt\":[" ++ renderList at ++ "]}}"
 
