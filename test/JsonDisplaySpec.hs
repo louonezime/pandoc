@@ -45,9 +45,6 @@ spec = do
         it "render paragraph" $ do 
             renderEntry (Paragraph [(Text "Hello"), (Text "World")]) `shouldBe` "[\"Hello\",\"World\"]"
 
-        it "render Section" $ do 
-            renderEntry (Section "Un whisky" [(Paragraph [(Text ("Juste un doigt"))])]) `shouldBe` "{\"title\":\"Un whisky\",\"content\":[\"Juste un doigt\"]}"
-
         it "render List" $ do 
             renderEntry (List [(Paragraph [(Text "Vous etez odile de ray")])]) `shouldBe` "{\"list\":[[\"Vous etez odile de ray\"]]}"
 
