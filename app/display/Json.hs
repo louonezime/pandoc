@@ -39,4 +39,5 @@ renderBodyContent (x:xs) = (renderEntry x) ++ (foldr append [] (map renderEntry 
 
 renderEntry :: Entry -> String
 renderEntry (Text s) = '"':s ++ "\""
+renderEntry (Paragraph p) = '[':(renderBodyContent p) ++ "]"
 renderEntry _ = "null"
