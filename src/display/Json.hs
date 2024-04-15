@@ -5,7 +5,15 @@
 -- JsonDisplayer
 -}
 
-module Json (renderJson, renderAuthor, renderTitle, renderDate, renderHeader, renderBody, renderEntry) where
+module Json (
+    renderJson,
+    renderAuthor,
+    renderTitle,
+    renderDate,
+    renderHeader,
+    renderBody,
+    renderEntry,
+) where
 
 import Document (Document (..), Entry (..), Header (..))
 import System.IO (Handle, hPutStr, hPutStrLn)
@@ -46,12 +54,13 @@ renderEntry (List e) = renderListEntry e
 renderEntry (Link ul at) = renderLink ul at
 renderEntry (CodeBlock c) = renderCodeBlock c
 renderEntry (Bold b) = renderBold b
-renderEntry (Italic i) = renderItalic i 
+renderEntry (Italic i) = renderItalic i
 renderEntry (Code c) = renderCode c
 renderEntry (Image i a) = renderImage i a
 
 renderSection :: String -> [Entry] -> String
-renderSection t e = "{\"section\":{\"title\":\"" ++ t ++ "\",\"content\":" ++ renderList e ++ "}}"
+renderSection t e =
+    "{\"section\":{\"title\":\"" ++ t ++ "\",\"content\":" ++ renderList e ++ "}}"
 
 renderListItem :: Entry -> String
 renderListItem e = '[' : (renderEntry e) ++ "]"
@@ -64,7 +73,12 @@ renderListEntry :: [Entry] -> String
 renderListEntry e = "{\"list\":" ++ (renderListContent e) ++ "}"
 
 renderLink :: Entry -> [Entry] -> String
-renderLink ul at = "{\"link\":{\"url\":" ++ renderEntry ul ++ ",\"content\":[" ++ renderList at ++ "]}}"
+renderLink ul at =
+    "{\"link\":{\"url\":"
+        ++ renderEntry ul
+        ++ ",\"content\":["
+        ++ renderList at
+        ++ "]}}"
 
 renderCodeBlock :: [Entry] -> String
 renderCodeBlock e = "{\"codeblock\":[" ++ (renderList e) ++ "]}"
@@ -79,5 +93,9 @@ renderCode :: Entry -> String
 renderCode e = "{\"code\":" ++ renderEntry e ++ "}"
 
 renderImage :: Entry -> [Entry] -> String
-renderImage ul at = "{\"image\":{\"url\":" ++ renderEntry ul ++ ",\"alt\":[" ++ renderList at ++ "]}}"
-
+renderImage ul at =
+    "{\"image\":{\"url\":"
+        ++ renderEntry ul
+        ++ ",\"alt\":["
+        ++ renderList at
+        ++ "]}}"
