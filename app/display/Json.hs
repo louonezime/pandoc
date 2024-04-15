@@ -36,20 +36,33 @@ renderBody e = ",\"body\":[" ++ (renderList e) ++ "]"
 
 renderList :: [Entry] -> String
 renderList [] = ""
-renderList (x : xs) = (renderEntry x) ++ (foldr append [] (map renderEntry xs))
+renderList (x : xs) = (foldr append (renderEntry x) (map renderEntry xs))
 
 renderEntry :: Entry -> String
 renderEntry (Text s) = '"' : s ++ "\""
 renderEntry (Paragraph p) = '[' : (renderList p) ++ "]"
 renderEntry (Section t c) = renderSection t c
-renderList (List e) = renderListEntry e
+renderEntry (List e) = renderListEntry e
+renderEntry (Link ul at) = renderLink ul at
+renderEntry (CodeBlock c) = renderCodeBlock c
 renderEntry _ = "null"
 
 renderSection :: String -> [Entry] -> String
 renderSection t e = "{\"title\":\"" ++ t ++ "\",\"content\":" ++ renderList e ++ "}"
 
+renderListItem :: Entry -> String
+renderListItem e = '[':(renderEntry e) ++ "]"
+
+renderListContent :: [Entry] -> String
+renderListContent [] = ""
+renderListContent (x : xs) = (foldr append (renderListItem x) (map renderListItem xs))
+
 renderListEntry :: [Entry] -> String
-renderListEntry e = "{\"list\":\"[" ++ renderList e ++ "]}"
+renderListEntry e = "{\"list\":[" ++ (renderListContent e) ++ "]}"
 
 renderLink :: Entry -> [Entry] -> String
-renderLink ul at = "{\"url\":" ++ renderEntry ul ++ ",\"content\":" ++ renderList e ++ "}"
+renderLink ul at = "{\"url\":" ++ renderEntry ul ++ ",\"content\":" ++ renderList at ++ "}"
+
+renderCodeBlock :: [Entry] -> String
+renderCodeBlock e = "{\"list\":[" ++ (renderCodeBlock e) ++ "]}"
+
