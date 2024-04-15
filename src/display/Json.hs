@@ -5,7 +5,7 @@
 -- JsonDisplayer
 -}
 
-module Json (renderJson) where
+module Json (renderJson, renderAuthor, renderTitle, renderDate, renderHeader) where
 
 import Document (Document (..), Entry (..), Header (..))
 import System.IO (Handle, hPutStr, hPutStrLn)

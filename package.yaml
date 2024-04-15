@@ -34,14 +34,15 @@ ghc-options:
 - -Wredundant-constraints
 
 library:
-  source-dirs: src
+  source-dirs:
+      - src
+      - src/display
 
 executables:
   mypandoc-exe:
     main:                Main.hs
     source-dirs:
       - app
-      - app/display
     ghc-options:
     - -threaded
     - -rtsopts
