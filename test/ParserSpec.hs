@@ -7,8 +7,8 @@
 
 module ParserSpec (spec) where
 
-import Test.Hspec
 import Control.Applicative (Alternative (..))
+import Test.Hspec
 
 import Parsing
 

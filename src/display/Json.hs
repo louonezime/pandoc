@@ -5,7 +5,7 @@
 -- JsonDisplayer
 -}
 
-module Json (renderJson, renderAuthor, renderTitle, renderDate, renderHeader) where
+module Json (renderJson, renderAuthor, renderTitle, renderDate, renderHeader, renderBody, renderEntry) where
 
 import Document (Document (..), Entry (..), Header (..))
 import System.IO (Handle, hPutStr, hPutStrLn)
@@ -51,7 +51,7 @@ renderSection :: String -> [Entry] -> String
 renderSection t e = "{\"title\":\"" ++ t ++ "\",\"content\":" ++ renderList e ++ "}"
 
 renderListItem :: Entry -> String
-renderListItem e = '[':(renderEntry e) ++ "]"
+renderListItem e = '[' : (renderEntry e) ++ "]"
 
 renderListContent :: [Entry] -> String
 renderListContent [] = ""
@@ -64,5 +64,5 @@ renderLink :: Entry -> [Entry] -> String
 renderLink ul at = "{\"url\":" ++ renderEntry ul ++ ",\"content\":" ++ renderList at ++ "}"
 
 renderCodeBlock :: [Entry] -> String
-renderCodeBlock e = "{\"list\":[" ++ (renderCodeBlock e) ++ "]}"
+renderCodeBlock e = "{\"list\":[" ++ (renderList e) ++ "]}"
 
