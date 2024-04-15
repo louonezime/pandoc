@@ -32,10 +32,10 @@ append :: String -> String -> String
 append s res = res ++ ',' : s
 
 renderBody :: [Entry] -> String
-renderBody e = ",\"body\":[" ++ (renderList e) ++ "]"
+renderBody e = ",\"body\":" ++ (renderList e)
 
 renderList :: [Entry] -> String
-renderList [] = ""
+renderList [] = "[]"
 renderList (x : xs) = (foldr append (renderEntry x) (map renderEntry xs))
 
 renderEntry :: Entry -> String
@@ -45,24 +45,36 @@ renderEntry (Section t c) = renderSection t c
 renderEntry (List e) = renderListEntry e
 renderEntry (Link ul at) = renderLink ul at
 renderEntry (CodeBlock c) = renderCodeBlock c
+renderEntry (Bold b) = renderBold b
+renderEntry (Italic i) = renderItalic i 
+renderEntry (Code c) = renderCode c
 renderEntry _ = "null"
 
 renderSection :: String -> [Entry] -> String
-renderSection t e = "{\"title\":\"" ++ t ++ "\",\"content\":" ++ renderList e ++ "}"
+renderSection t e = "{\"section\":{\"title\":\"" ++ t ++ "\",\"content\":" ++ renderList e ++ "}}"
 
 renderListItem :: Entry -> String
 renderListItem e = '[' : (renderEntry e) ++ "]"
 
 renderListContent :: [Entry] -> String
-renderListContent [] = ""
+renderListContent [] = "[]"
 renderListContent (x : xs) = (foldr append (renderListItem x) (map renderListItem xs))
 
 renderListEntry :: [Entry] -> String
-renderListEntry e = "{\"list\":[" ++ (renderListContent e) ++ "]}"
+renderListEntry e = "{\"list\":" ++ (renderListContent e) ++ "}"
 
 renderLink :: Entry -> [Entry] -> String
-renderLink ul at = "{\"url\":" ++ renderEntry ul ++ ",\"content\":" ++ renderList at ++ "}"
+renderLink ul at = "{\"link\":{\"url\":" ++ renderEntry ul ++ ",\"content\":[" ++ renderList at ++ "]}}"
 
 renderCodeBlock :: [Entry] -> String
-renderCodeBlock e = "{\"list\":[" ++ (renderList e) ++ "]}"
+renderCodeBlock e = "{\"codeblock\":[" ++ (renderList e) ++ "]}"
+
+renderBold :: Entry -> String
+renderBold e = "{\"bold\":" ++ renderEntry e ++ "}"
+
+renderItalic :: Entry -> String
+renderItalic e = "{\"italic\":" ++ renderEntry e ++ "}"
+
+renderCode :: Entry -> String
+renderCode e = "{\"code\":" ++ renderEntry e ++ "}"
 
