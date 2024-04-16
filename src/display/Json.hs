@@ -19,11 +19,11 @@ import Document (Document (..), Entry (..), Header (..))
 import System.IO (Handle, hPutStr, hPutStrLn)
 
 renderJson :: Document -> String
-renderJson (Document hdr bd) = '{' : (renderHeader hdr) ++ (renderBody bd) ++ "}"
+renderJson (Document hdr bd) = '{' : (renderHeader hdr) ++ renderBody bd ++ "}"
 
 renderHeader :: Header -> String
 renderHeader (Header t a d) =
-    "\"header\":{" ++ (renderTitle t) ++ (renderAuthor a) ++ (renderDate d) ++ "}"
+    "\"header\":{" ++ renderTitle t ++ renderAuthor a ++ renderDate d ++ "}"
 
 renderAuthor :: Maybe String -> String
 renderAuthor (Just auth) = ",\"author\":\"" ++ auth ++ "\""
@@ -36,15 +36,15 @@ renderDate :: Maybe String -> String
 renderDate (Just d) = ",\"date\":\"" ++ d ++ "\""
 renderDate Nothing = ""
 
-append :: String -> String -> String
-append s res = res ++ ',' : s
+app :: String -> String -> String
+app s res = res ++ ',' : s
 
 renderBody :: [Entry] -> String
 renderBody e = ",\"body\":" ++ (renderList e)
 
 renderList :: [Entry] -> String
 renderList [] = "[]"
-renderList (x : xs) = (foldr append (renderEntry x) (map renderEntry xs))
+renderList (x : xs) = foldr app (renderEntry x) (map renderEntry xs)
 
 renderEntry :: Entry -> String
 renderEntry (Text s) = '"' : s ++ "\""
@@ -60,14 +60,18 @@ renderEntry (Image i a) = renderImage i a
 
 renderSection :: String -> [Entry] -> String
 renderSection t e =
-    "{\"section\":{\"title\":\"" ++ t ++ "\",\"content\":" ++ renderList e ++ "}}"
+    hdr ++ t ++ "\",\"content\":" ++ renderList e ++ "}}"
+  where
+    hdr = "{\"section\":{\"title\":\""
 
 renderListItem :: Entry -> String
 renderListItem e = '[' : (renderEntry e) ++ "]"
 
 renderListContent :: [Entry] -> String
 renderListContent [] = "[]"
-renderListContent (x : xs) = (foldr append (renderListItem x) (map renderListItem xs))
+renderListContent (x : xs) = foldr app (renderListItem x) lst
+  where
+    lst = map renderListItem xs
 
 renderListEntry :: [Entry] -> String
 renderListEntry e = "{\"list\":" ++ (renderListContent e) ++ "}"
