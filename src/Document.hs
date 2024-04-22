@@ -19,13 +19,13 @@ data Entry
         { txt :: String
         }
     | Bold
-        { text :: Entry
+        { bold :: String
         }
     | Italic
-        { text :: Entry
+        { italic :: String
         }
     | Code
-        { text :: Entry
+        { code :: String
         }
     | Section
         { sectionTitle :: String,
@@ -38,12 +38,12 @@ data Entry
         { content :: [Entry]
         }
     | Link
-        { url :: Entry,
-          content :: [Entry]
+        { url :: String,
+          content :: String
         }
     | Image
-        { url :: Entry,
-          alt :: [Entry]
+        { url :: String,
+          alt :: String
         }
     | Paragraph
         { content :: [Entry]
