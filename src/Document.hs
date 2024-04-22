@@ -39,7 +39,7 @@ data Entry
         }
     | Link
         { url :: String,
-          content :: String
+          alt :: String
         }
     | Image
         { url :: String,
