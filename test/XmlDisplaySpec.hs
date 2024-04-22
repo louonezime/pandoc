@@ -27,18 +27,18 @@ spec = do
             renderParagraph (Paragraph [Text "Hi", Code "Hello"])
                 `shouldBe` "<paragraph>Hi<code>Hello</code></paragraph>"
         it "Image" $ do
-            renderImage (Image "www.perdu.com" "No image")
+            renderImage (Image "www.perdu.com" "No Image")
                 `shouldBe` "<image url=\"www.perdu.com\">No Image</image>"
         it "link" $ do
-            renderLink (Link "www.perdu.com" "No image")
+            renderLink (Link "www.perdu.com" "No Image")
                 `shouldBe` "<link url=\"www.perdu.com\">No Image</link>"
         it "List" $ do
-            renderList (List [Paragraph "www.perdu.com", Paragraph "No image"])
+            renderList (List [Paragraph [(Text "www.perdu.com")], Paragraph [(Text "No Image")]])
                 `shouldBe` "<list><paragraph>www.perdu.com</paragraph><paragraph>No Image</paragraph></list>"
         it "CodeBlock" $ do
-            renderCodeBlock (CodeBlock [Paragraph "www.perdu.com", Paragraph "No image"])
-                `shouldBe` "<list><paragraph>www.perdu.com</paragraph><paragraph>No Image</paragraph></list>"
+            renderCodeBlock (CodeBlock [Paragraph [(Text "www.perdu.com")], Paragraph [(Text "No Image")]])
+                `shouldBe` "<codeblock><paragraph>www.perdu.com</paragraph><paragraph>No Image</paragraph></codeblock>"
         it "Section" $ do
             renderSection
-                (Section "Title" [Paragraph "www.perdu.com", Paragraph "No image"])
+                (Section "Title" [Paragraph [(Text "www.perdu.com")], Paragraph [(Text "No Image")]])
                 `shouldBe` "<section title=\"Title\"><paragraph>www.perdu.com</paragraph><paragraph>No Image</paragraph></section>"
