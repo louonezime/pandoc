@@ -7,25 +7,30 @@
 
 module Xml where
 
-import Parsing
-
 import Control.Applicative (Alternative (..))
 import Control.Monad ((>=>))
 
 import Parsing
-import Document
+-- import Document
 
-parseAttributeValue :: Parser String
-parseAttributeValue = parseQuotes
+-- parseAttributeValue :: Parser String
+-- parseAttributeValue = parseQuotes
 
-parseAttribute :: String -> Parser String
-parseAttribute key = parseChar ' ' *> parseSomeChar (['a'..'z'] ++ ['A'..'Z']) <* parseChar '=' <* parseAttributeValue
+-- parseAttribute :: String -> Parser String
+-- parseAttribute key = parseChar ' ' *> parseSomeChar (['a'..'z'] ++ ['A'..'Z']) <* parseChar '=' <* parseAttributeValue
 
-parseTag :: String -> Parser String
-parseTag name = parseChar '<' *> parseChar name *> parseMany (parseAttribute name) <* parseChar '>'
+parseChevron :: Parser String
+parseChevron = parseChar '<' *> parseSome (parseNonStr "<>") <* parseChar '>'
 
-parseTextContent :: Parser String
-parseTextContent = parseSome (parseSomeChar (['a'..'z'] ++ ['A'..'Z'] ++ " ,.!?"))
+parseEndChevron :: Parser String
+parseEndChevron = parseChar '<' *> parseChar '/' *> parseSome (parseNonStr "<>") <* parseChar '>'
+
+-- parseTag :: String -> Parser String
+-- parseTag name = parseChar '<' *> parseChar '/' *> parseChar name *> parseChar '>'
+-- parseTag name = parseChar '<' *> parseChar name *> parseMany (parseAttribute name) <* parseChar '>'
+
+-- parseTextContent :: Parser String
+-- parseTextContent = parseSome (parseSomeChar (['a'..'z'] ++ ['A'..'Z'] ++ " ,.!?"))
 
 -- parseXMLElement :: String -> Parser Entry
 -- parseXMLElement "paragraph" = Paragraph <$> (parseTag "paragraph" *> parseTextContent <* parseTag "/paragraph")
@@ -49,7 +54,7 @@ parseTextContent = parseSome (parseSomeChar (['a'..'z'] ++ ['A'..'Z'] ++ " ,.!?"
 
 -- parseXML :: Parser Document
 -- parseXML = do
---   parseTag "document"
+--   parseTag "<document>"
 --   header <- parseXMLElement "header"
 --   body <- parseXMLElement "body"
 --   parseTag "/document"

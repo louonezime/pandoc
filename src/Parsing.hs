@@ -19,6 +19,7 @@ module Parsing (
     parseTuple,
     parseQuotes,
     parseSeparators,
+    parseNonStr,
     Parser (..),
 ) where
 
@@ -67,6 +68,15 @@ parseAnyChar str = Parser $ \s ->
 
 parseSomeChar :: String -> Parser Char
 parseSomeChar = foldr ((<|>) . parseChar) empty
+
+parseString :: String -> Parser String
+parseString str = Parser $ \s ->
+    case str of
+        [] -> Right (str, s)
+        (x : xs) ->
+            case runParser (parseChar x) s of
+                Right (_, ys) -> runParser (parseString xs) ys
+                Left err -> Left err
 
 parseOr :: Parser a -> Parser a -> Parser a
 parseOr (Parser p1) (Parser p2) =
