@@ -39,11 +39,11 @@ data Entry
         }
     | Link
         { url :: String,
-          alt :: [Entry]
+          alt :: Entry
         }
     | Image
         { url :: String,
-          alt :: [Entry]
+          alt :: Entry
         }
     | Paragraph
         { content :: [Entry]
