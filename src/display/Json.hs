@@ -75,12 +75,12 @@ renderListContent (x : xs) = foldr app (renderListItem x) lst
 renderListEntry :: [Entry] -> String
 renderListEntry e = "{\"list\":" ++ renderListContent e ++ "}"
 
-renderLink :: String -> [Entry] -> String
+renderLink :: String -> Entry -> String
 renderLink ul at =
     "{\"link\":{\"url\":\""
         ++ ul
         ++ "\",\"content\":["
-        ++ renderList at
+        ++ renderEntry at
         ++ "]}}"
 
 renderCodeBlock :: [Entry] -> String
@@ -95,10 +95,10 @@ renderItalic e = "{\"italic\":" ++ renderEntry e ++ "}"
 renderCode :: Entry -> String
 renderCode e = "{\"code\":" ++ renderEntry e ++ "}"
 
-renderImage :: String -> [Entry] -> String
+renderImage :: String -> Entry -> String
 renderImage ul at =
     "{\"image\":{\"url\":\""
         ++ ul
         ++ "\",\"alt\":["
-        ++ renderList at
+        ++ renderEntry at
         ++ "]}}"

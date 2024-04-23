@@ -72,10 +72,12 @@ renderParagraph (Paragraph arr) =
     "<paragraph>" ++ renderElems arr ++ "</paragraph>"
 
 renderImage :: Entry -> String
-renderImage (Image l t) = "<image url=\"" ++ l ++ "\">" ++ renderElems t ++ "</image>"
+renderImage (Image l t) =
+    "<image url=\"" ++ l ++ "\">" ++ renderElem t ++ "</image>"
 
 renderLink :: Entry -> String
-renderLink (Link l t) = "<link url=\"" ++ l ++ "\">" ++ renderElems t ++ "</link>"
+renderLink (Link l t) =
+    "<link url=\"" ++ l ++ "\">" ++ renderElem t ++ "</link>"
 
 renderSection :: Entry -> String
 renderSection (Section t arr) =
