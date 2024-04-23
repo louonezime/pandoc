@@ -56,13 +56,13 @@ renderElems :: [Entry] -> String
 renderElems = concatMap renderElem
 
 renderBold :: Entry -> String
-renderBold (Bold s) = "<bold>" ++ s ++ "</bold>"
+renderBold (Bold s) = "<bold>" ++ renderElem s ++ "</bold>"
 
 renderItalic :: Entry -> String
-renderItalic (Italic s) = "<italic>" ++ s ++ "</italic>"
+renderItalic (Italic s) = "<italic>" ++ renderElem s ++ "</italic>"
 
 renderCode :: Entry -> String
-renderCode (Code s) = "<code>" ++ s ++ "</code>"
+renderCode (Code s) = "<code>" ++ renderElem s ++ "</code>"
 
 renderList :: Entry -> String
 renderList (List arr) = "<list>" ++ renderElems arr ++ "</list>"
@@ -72,10 +72,10 @@ renderParagraph (Paragraph arr) =
     "<paragraph>" ++ renderElems arr ++ "</paragraph>"
 
 renderImage :: Entry -> String
-renderImage (Image l t) = "<image url=\"" ++ l ++ "\">" ++ t ++ "</image>"
+renderImage (Image l t) = "<image url=\"" ++ l ++ "\">" ++ renderElems t ++ "</image>"
 
 renderLink :: Entry -> String
-renderLink (Link l t) = "<link url=\"" ++ l ++ "\">" ++ t ++ "</link>"
+renderLink (Link l t) = "<link url=\"" ++ l ++ "\">" ++ renderElems t ++ "</link>"
 
 renderSection :: Entry -> String
 renderSection (Section t arr) =

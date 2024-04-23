@@ -9,7 +9,7 @@ module JsonDisplaySpec (spec) where
 
 import Test.Hspec
 
-import Document (Header (..), Entry (..))
+import Document (Entry (..), Header (..))
 import Json
 
 spec :: Spec
@@ -39,32 +39,32 @@ spec = do
         it "empty body" $ do
             renderBody [] `shouldBe` ",\"body\":[]"
 
-        it "render simple text" $ do 
+        it "render simple text" $ do
             renderEntry (Text "C'est une bonne situation ca la tek 1") `shouldBe` "\"C'est une bonne situation ca la tek 1\""
 
-        it "render paragraph" $ do 
+        it "render paragraph" $ do
             renderEntry (Paragraph [(Text "Hello"), (Text "World")]) `shouldBe` "[\"Hello\",\"World\"]"
 
-        it "render List" $ do 
+        it "render List" $ do
             renderEntry (List [(Paragraph [(Text "Vous etez odile de ray")])]) `shouldBe` "{\"list\":[[\"Vous etez odile de ray\"]]}"
 
-        it "render codeblock" $ do 
+        it "render codeblock" $ do
             renderEntry (CodeBlock [(Paragraph [(Text "int main (void)")])]) `shouldBe` "{\"codeblock\":[[\"int main (void)\"]]}"
 
-        it "render link" $ do 
-            renderEntry (Link (Text "https://perdu.com") [Text "perdu"]) `shouldBe` "{\"link\":{\"url\":\"https://perdu.com\",\"content\":[\"perdu\"]}}"
+        it "render link" $ do
+            renderEntry (Link ("https://perdu.com") [Text "perdu"]) `shouldBe` "{\"link\":{\"url\":\"https://perdu.com\",\"content\":[\"perdu\"]}}"
 
-        it "render image" $ do 
-            renderEntry (Image (Text "https://perdu.com") [Text "perdu"]) `shouldBe` "{\"image\":{\"url\":\"https://perdu.com\",\"alt\":[\"perdu\"]}}"
+        it "render image" $ do
+            renderEntry (Image ("https://perdu.com") [Text "perdu"]) `shouldBe` "{\"image\":{\"url\":\"https://perdu.com\",\"alt\":[\"perdu\"]}}"
 
-        it "render bold" $ do 
+        it "render bold" $ do
             renderEntry (Bold (Text "Hello")) `shouldBe` "{\"bold\":\"Hello\"}"
 
-        it "render italic" $ do 
+        it "render italic" $ do
             renderEntry (Italic (Text "Hello")) `shouldBe` "{\"italic\":\"Hello\"}"
-        
-        it "render code" $ do 
+
+        it "render code" $ do
             renderEntry (Code (Text "Hello")) `shouldBe` "{\"code\":\"Hello\"}"
 
-        it "render section" $ do 
+        it "render section" $ do
             renderEntry (Section "title" []) `shouldBe` "{\"section\":{\"title\":\"title\",\"content\":[]}}"
