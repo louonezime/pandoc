@@ -31,6 +31,8 @@ module Parsing (
     parseCharInStr,
     parseLine,
     parseTillEmpty,
+    parseString,
+    parseCharInStr,
     Parser (..),
 ) where
 
