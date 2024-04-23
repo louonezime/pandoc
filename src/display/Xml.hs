@@ -1,3 +1,11 @@
+{-
+-- EPITECH PROJECT, 2024
+-- pandoc
+-- File description:
+-- Xml
+-}
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
+
 module Xml (
     renderXml,
     renderHeader,
@@ -12,13 +20,14 @@ module Xml (
     renderList,
     renderParagraph,
     renderSection,
-    renderCodeBlock
+    renderCodeBlock,
 ) where
 
 import Document (Document (..), Entry (..), Header (..))
 
 renderXml :: Document -> String
-renderXml (Document hd bdy) = "<document>" ++ (renderHeader hd) ++ "</document>"
+renderXml (Document hd bdy) =
+    "<document>" ++ renderHeader hd ++ renderBody bdy ++ "</document>"
 
 renderTitle :: String -> String
 renderTitle s = '"' : s ++ "\""
@@ -44,8 +53,7 @@ renderBody :: [Entry] -> String
 renderBody arr = "<body>" ++ renderElems arr ++ "</body>"
 
 renderElems :: [Entry] -> String
-renderElems [] = ""
-renderElems (x : xs) = renderElem x ++ renderElems xs
+renderElems = concatMap renderElem
 
 renderBold :: Entry -> String
 renderBold (Bold s) = "<bold>" ++ s ++ "</bold>"
@@ -60,7 +68,8 @@ renderList :: Entry -> String
 renderList (List arr) = "<list>" ++ renderElems arr ++ "</list>"
 
 renderParagraph :: Entry -> String
-renderParagraph (Paragraph arr) = "<paragraph>" ++ renderElems arr ++ "</paragraph>"
+renderParagraph (Paragraph arr) =
+    "<paragraph>" ++ renderElems arr ++ "</paragraph>"
 
 renderImage :: Entry -> String
 renderImage (Image l t) = "<image url=\"" ++ l ++ "\">" ++ t ++ "</image>"
@@ -69,10 +78,12 @@ renderLink :: Entry -> String
 renderLink (Link l t) = "<link url=\"" ++ l ++ "\">" ++ t ++ "</link>"
 
 renderSection :: Entry -> String
-renderSection (Section t arr) = "<section title=\"" ++ t ++ "\">" ++ renderElems arr ++ "</section>"
+renderSection (Section t arr) =
+    "<section title=\"" ++ t ++ "\">" ++ renderElems arr ++ "</section>"
 
 renderCodeBlock :: Entry -> String
-renderCodeBlock (CodeBlock arr) = "<codeblock>" ++ renderElems arr ++ "</codeblock>"
+renderCodeBlock (CodeBlock arr) =
+    "<codeblock>" ++ renderElems arr ++ "</codeblock>"
 
 renderElem :: Entry -> String
 renderElem (Text t) = t
@@ -85,4 +96,3 @@ renderElem x@(Link _ _) = renderLink x
 renderElem x@(Image _ _) = renderImage x
 renderElem x@(Section _ _) = renderSection x
 renderElem x@(CodeBlock _) = renderCodeBlock x
-
