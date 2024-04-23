@@ -18,19 +18,19 @@ spec = do
             renderHeader (Header "Je connais cette theorie" Nothing Nothing)
                 `shouldBe` "<header title=\"Je connais cette theorie\"></header>"
         it "bold text" $ do
-            renderBold (Bold "Hello") `shouldBe` "<bold>Hello</bold>"
+            renderBold (Bold (Text "Hello")) `shouldBe` "<bold>Hello</bold>"
         it "italic text" $ do
-            renderItalic (Italic "Hello") `shouldBe` "<italic>Hello</italic>"
+            renderItalic (Italic (Text "Hello")) `shouldBe` "<italic>Hello</italic>"
         it "code text" $ do
-            renderCode (Code "Hello") `shouldBe` "<code>Hello</code>"
+            renderCode (Code (Text "Hello")) `shouldBe` "<code>Hello</code>"
         it "paragraph" $ do
-            renderParagraph (Paragraph [Text "Hi", Code "Hello"])
+            renderParagraph (Paragraph [Text "Hi", Code (Text "Hello")])
                 `shouldBe` "<paragraph>Hi<code>Hello</code></paragraph>"
         it "Image" $ do
-            renderImage (Image "www.perdu.com" "No Image")
+            renderImage (Image "www.perdu.com" [Text "No Image"])
                 `shouldBe` "<image url=\"www.perdu.com\">No Image</image>"
         it "link" $ do
-            renderLink (Link "www.perdu.com" "No Image")
+            renderLink (Link "www.perdu.com" [Text "No Image"])
                 `shouldBe` "<link url=\"www.perdu.com\">No Image</link>"
         it "List" $ do
             renderList (List [Paragraph [(Text "www.perdu.com")], Paragraph [(Text "No Image")]])

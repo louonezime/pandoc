@@ -16,10 +16,9 @@ module Json (
 ) where
 
 import Document (Document (..), Entry (..), Header (..))
-import System.IO (Handle, hPutStr, hPutStrLn)
 
 renderJson :: Document -> String
-renderJson (Document hdr bd) = '{' : (renderHeader hdr) ++ renderBody bd ++ "}"
+renderJson (Document hdr bd) = '{' : renderHeader hdr ++ renderBody bd ++ "}"
 
 renderHeader :: Header -> String
 renderHeader (Header t a d) =
@@ -40,15 +39,15 @@ app :: String -> String -> String
 app s res = res ++ ',' : s
 
 renderBody :: [Entry] -> String
-renderBody e = ",\"body\":" ++ (renderList e)
+renderBody e = ",\"body\":" ++ renderList e
 
 renderList :: [Entry] -> String
 renderList [] = "[]"
-renderList (x : xs) = foldr app (renderEntry x) (map renderEntry xs)
+renderList (x : xs) = foldr (app . renderEntry) (renderEntry x) xs
 
 renderEntry :: Entry -> String
 renderEntry (Text s) = '"' : s ++ "\""
-renderEntry (Paragraph p) = '[' : (renderList p) ++ "]"
+renderEntry (Paragraph p) = '[' : renderList p ++ "]"
 renderEntry (Section t c) = renderSection t c
 renderEntry (List e) = renderListEntry e
 renderEntry (Link ul at) = renderLink ul at
@@ -65,7 +64,7 @@ renderSection t e =
     hdr = "{\"section\":{\"title\":\""
 
 renderListItem :: Entry -> String
-renderListItem e = '[' : (renderEntry e) ++ "]"
+renderListItem e = '[' : renderEntry e ++ "]"
 
 renderListContent :: [Entry] -> String
 renderListContent [] = "[]"
@@ -74,18 +73,18 @@ renderListContent (x : xs) = foldr app (renderListItem x) lst
     lst = map renderListItem xs
 
 renderListEntry :: [Entry] -> String
-renderListEntry e = "{\"list\":" ++ (renderListContent e) ++ "}"
+renderListEntry e = "{\"list\":" ++ renderListContent e ++ "}"
 
-renderLink :: Entry -> [Entry] -> String
+renderLink :: String -> [Entry] -> String
 renderLink ul at =
-    "{\"link\":{\"url\":"
-        ++ renderEntry ul
-        ++ ",\"content\":["
+    "{\"link\":{\"url\":\""
+        ++ ul
+        ++ "\",\"content\":["
         ++ renderList at
         ++ "]}}"
 
 renderCodeBlock :: [Entry] -> String
-renderCodeBlock e = "{\"codeblock\":[" ++ (renderList e) ++ "]}"
+renderCodeBlock e = "{\"codeblock\":[" ++ renderList e ++ "]}"
 
 renderBold :: Entry -> String
 renderBold e = "{\"bold\":" ++ renderEntry e ++ "}"
@@ -96,10 +95,10 @@ renderItalic e = "{\"italic\":" ++ renderEntry e ++ "}"
 renderCode :: Entry -> String
 renderCode e = "{\"code\":" ++ renderEntry e ++ "}"
 
-renderImage :: Entry -> [Entry] -> String
+renderImage :: String -> [Entry] -> String
 renderImage ul at =
-    "{\"image\":{\"url\":"
-        ++ renderEntry ul
-        ++ ",\"alt\":["
+    "{\"image\":{\"url\":\""
+        ++ ul
+        ++ "\",\"alt\":["
         ++ renderList at
         ++ "]}}"
