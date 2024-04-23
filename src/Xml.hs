@@ -11,16 +11,16 @@ import Control.Applicative (Alternative (..))
 import Control.Monad ((>=>))
 
 import Parsing
--- import Document
+import Document
 
--- parseAttributeValue :: Parser String
--- parseAttributeValue = parseQuotes
+parseAttributeValue :: Parser String
+parseAttributeValue = parseQuotes
 
--- parseAttribute :: String -> Parser String
--- parseAttribute key = parseChar ' ' *> parseSomeChar (['a'..'z'] ++ ['A'..'Z']) <* parseChar '=' <* parseAttributeValue
+parseAttributeName :: Parser String
+parseAttributeName = parseSome (parseNonStr " =") <* parseChar '='
 
 parseChevron :: Parser String
-parseChevron = parseChar '<' *> parseSome (parseNonStr "<>") <* parseChar '>'
+parseChevron = parseChar '<' *> parseSome (parseNonStr "</>") <* parseChar '>'
 
 parseEndChevron :: Parser String
 parseEndChevron = parseChar '<' *> parseChar '/' *> parseSome (parseNonStr "<>") <* parseChar '>'
@@ -52,10 +52,10 @@ parseEndChevron = parseChar '<' *> parseChar '/' *> parseSome (parseNonStr "<>")
 --   content <- parseMany parseXML <* parseTag "/section"
 --   return (Section title content)
 
--- parseXML :: Parser Document
--- parseXML = do
---   parseTag "<document>"
---   header <- parseXMLElement "header"
---   body <- parseXMLElement "body"
---   parseTag "/document"
---   return (Document header [body])
+parseXML :: Parser Document
+parseXML = do
+  parseChevron "document"
+  -- header <- parseXMLElement "header"
+  -- body <- parseXMLElement "body"
+  parseEndChevron "document"
+  return (Document header [body])

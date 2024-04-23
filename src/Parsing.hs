@@ -20,6 +20,8 @@ module Parsing (
     parseQuotes,
     parseSeparators,
     parseNonStr,
+    parseString,
+    parseCharInStr,
     Parser (..),
 ) where
 
@@ -70,13 +72,7 @@ parseSomeChar :: String -> Parser Char
 parseSomeChar = foldr ((<|>) . parseChar) empty
 
 parseString :: String -> Parser String
-parseString str = Parser $ \s ->
-    case str of
-        [] -> Right (str, s)
-        (x : xs) ->
-            case runParser (parseChar x) s of
-                Right (_, ys) -> runParser (parseString xs) ys
-                Left err -> Left err
+parseString str = parseMany (parseSomeChar str)
 
 parseOr :: Parser a -> Parser a -> Parser a
 parseOr (Parser p1) (Parser p2) =
@@ -132,5 +128,11 @@ parseNonStr str = Parser $ \s ->
         (x : xs) | x `notElem` str -> Right (x, xs)
         _ -> Left (str ++ ": found")
 
+parseCharInStr :: String -> Parser Char
+parseCharInStr chars = Parser $ \s ->
+  case s of
+    (x : xs) | x `elem` chars -> Right (x, xs)
+    _ -> Left ("Expected one of " ++ chars ++ ", but end of input reached")
+
 parseSeparators :: Parser String
-parseSeparators = parseSome (parseAnyChar " \t\n")
+parseSeparators = parseSome (parseAnyChar " \t\n\r")
