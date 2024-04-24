@@ -14,22 +14,28 @@ data MarkdownElement
     | MarkdownTitle String
     | MarkdownAuthor (Maybe String)
     | MarkdownDate (Maybe String)
-    | MarkdownText String
+    | MarkdownCodeBlock [String]
+    | MarkdownText [String]
     | MarkdownItalic MarkdownContent
     | MarkdownBold MarkdownContent
-    | MarkdownCode MarkdownContent
     | MarkdownLink String String
     | MarkdownImage String String
     | MarkdownParagraph [MarkdownElement]
     | MarkdownSection String [MarkdownElement]
-    | MarkdownCodeBlock String
     | MarkdownList [MarkdownElement]
     | MarkdownItem MarkdownContent
     deriving (Show)
 
 type MarkdownContent = [MarkdownElement]
 
--- parseHeader ["title: Syntaxe MARKDOWN", "author: John Doe", "date: 2024-04-23"]
+parseCodeBlock :: [String] -> MarkdownContent
+parseCodeBlock ("```\n":rest) = [] -- end of code block
+parseCodeBlock (line:rest) = MarkdownCodeBlock [line] : parseCodeBlock rest
+
+isCodeBlock :: String -> Either String MarkdownElement
+isCodeBlock str
+    | str == "```\n" = Left "End of code block"
+    | otherwise = Right (MarkdownCodeBlock [str])
 
 parseHeader :: [String] -> MarkdownContent
 parseHeader ("---\n":rest) = [] -- end of header 
@@ -39,7 +45,7 @@ parseHeader (line:rest)
     | "date: " `isPrefixOf` line = MarkdownDate (Just $ drop 6 line) : parseHeader rest
     | otherwise = parseHeader rest
 parseHeader [] = []
-
+-- parseHeader ["title: Syntaxe MARKDOWN", "author: John Doe", "date: 2024-04-23"]
 
 isHeader :: String -> Either String MarkdownElement
 isHeader str
@@ -47,13 +53,15 @@ isHeader str
     | otherwise = Right (MarkdownHeader (parseHeader [str]))
 
 parseMarkdown :: [String] -> MarkdownContent
-parseMarkdown = rights . map isHeader
+parseMarkdown = rights . concatMap (\str -> [isHeader str, isCodeBlock str])
 
+-- parseMarkdown exampleMarkdown
+-- let exampleMarkdown = ["---\n", "title: Example", "author: John Doe", "date: 2024-04-23",
+-- "---\n", "```\n", "Code block line 1", "Code block line 2", "```", "Rest of the file"]
+-- parseCodeBlock test
 -- let exampleMarkdown = ["---\n", "title: Syntaxe MARKDOWN", "author: John Doe",
 -- "date: 2024-04-23", "---\n", "Content goes here", "rest of the file"]
--- parseMarkdown exampleMarkdown
-
--- test ghci
+-- parseHeader test
 
 -- data Parser a = Parser {
 --     runParser :: String -> Maybe (a, String)
