@@ -5,7 +5,7 @@
 -- Lib
 -}
 
-module Document (Header (..), Entry (..), Document (..)) where
+module Document (Header (..), Entry (..), Document (..), defaultHeader) where
 
 data Header = Header
     { title :: String,
@@ -13,6 +13,14 @@ data Header = Header
       date :: Maybe String
     }
     deriving (Show)
+
+defaultHeader :: Header
+defaultHeader =
+    Header
+        { title = "",
+          author = Nothing,
+          date = Nothing
+        }
 
 data Entry
     = Text
