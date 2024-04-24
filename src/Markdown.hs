@@ -15,11 +15,6 @@ import Control.Applicative ((<|>))
 import Document (Document (..), Entry (Text, CodeBlock), Header (..))
 import Parsing
 
--- RAPPEL
--- newtype Parser a = Parser {
---     runParser :: String -> Either String (a, String)
--- }
-
 data MarkdownElement
     = MarkdownHeader [MarkdownElement]
     | MarkdownTitle String
@@ -100,12 +95,10 @@ parseCodeBlockDelim :: Parser String
 parseCodeBlockDelim = parseBetween "```\n"
 
 parseCodeBlock :: Parser [Entry]
-parseCodeBlock = do
-    codeContent <- parseBetween "```\n"
-    let linesOfCode = lines codeContent
-        codeEntries = map Text linesOfCode
-    return codeEntries
-
+parseCodeBlock = Parser $ \str ->
+    case runParser parseCodeBlockDelim str of
+        Right (codeContent, remaining) -> Right (map Text (lines codeContent), remaining)
+        Left err -> Left err
 
 -- to test this run
 -- runParser (parser) "string"
