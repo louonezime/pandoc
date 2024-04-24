@@ -34,34 +34,6 @@ data MarkdownElement
 
 type MarkdownContent = [MarkdownElement]
 
-parseCodeBlock :: [String] -> MarkdownContent
-parseCodeBlock ("```\n" : rest) = [] -- end of code block
-parseCodeBlock (line : rest) = MarkdownCodeBlock [line] : parseCodeBlock rest
-
-isCodeBlock :: String -> Either String MarkdownElement
-isCodeBlock str
-    | str == "```\n" = Left "End of code block"
-    | otherwise = Right (MarkdownCodeBlock [str])
-
--- parseHeader :: [String] -> MarkdownContent
--- parseHeader ("---\n" : rest) = [] -- end of header
--- parseHeader (line : rest)
---     | "title: " `isPrefixOf` line = MarkdownTitle (drop 7 line) : parseHeader rest
---     | "author: " `isPrefixOf` line = MarkdownAuthor (Just $ drop 8 line) : parseHeader rest
---     | "date: " `isPrefixOf` line = MarkdownDate (Just $ drop 6 line) : parseHeader rest
---     | otherwise = parseHeader rest
--- parseHeader [] = []
-
--- parseHeader ["title: Syntaxe MARKDOWN", "author: John Doe", "date: 2024-04-23"]
-
--- isHeader :: String -> Either String MarkdownElement
--- isHeader str
---     | str == "---\n" = Left "End of header"
---     | otherwise = Right (MarkdownHeader (parseHeader [str]))
-
--- parseMarkdown :: [String] -> MarkdownContent
--- parseMarkdown = rights . concatMap (\str -> [isHeader str, isCodeBlock str])
-
 createDocFromHeader :: Header -> Document
 createDocFromHeader hd = Document hd []
 
@@ -86,23 +58,26 @@ parseHeaderFields (x : xs) hd = case runParser (parseHeaderField hd) x of
 parseHeaderField :: Header -> Parser Header
 parseHeaderField hd = Parser $ \str ->
     case runParser parseField str of
-        Right ("title: ", "") -> Left "No title specified"
+        Right (s, "") -> Left ("No " ++ s ++ "specified")
         Right ("title: ", z) -> Right (hd {title = z}, "")
+        Right ("title:", z) -> Right (hd {title = z}, "")
         Right ("date: ", z) -> Right (hd {date = Just z}, "")
+        Right ("date:", z) -> Right (hd {date = Just z}, "")
         Right ("author: ", z) -> Right (hd {author = Just z}, "")
+        Right ("author:", z) -> Right (hd {author = Just z}, "")
         _ -> Left "No field found"
 
 parseField :: Parser String
 parseField = parseTitle <|> parseDate <|> parseAuthor
 
 parseTitle :: Parser String
-parseTitle = parseAfter "title: "
+parseTitle = parseOr (parseAfter "title: ") (parseAfter "title:")
 
 parseDate :: Parser String
-parseDate = parseAfter "date: "
+parseDate = parseOr (parseAfter "date: ") (parseAfter "date:")
 
 parseAuthor :: Parser String
-parseAuthor = parseAfter "author: "
+parseAuthor = parseOr (parseAfter "author: ") (parseAfter "author:")
 
 -- parseMarkdown exampleMarkdown
 -- let exampleMarkdown = ["---\n", "title: Example", "author: John Doe", "date: 2024-04-23",
