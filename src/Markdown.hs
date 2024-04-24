@@ -35,7 +35,8 @@ data MarkdownElement
 type MarkdownContent = [MarkdownElement]
 
 parseMarkdown :: Parser Document
-parseMarkdown = Document <$> parseHeader (Header "" Nothing Nothing) <*> return []
+parseMarkdown =
+    Document <$> parseHeader (Header "" Nothing Nothing) <*> return []
 
 parseHeaderDash :: Parser String
 parseHeaderDash = parseBetween "---\n"
