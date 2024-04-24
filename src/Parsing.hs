@@ -23,6 +23,7 @@ module Parsing (
     parseAfter,
     parseBetween,
     parseBefore,
+    parseLine,
     Parser (..),
 ) where
 
@@ -121,6 +122,9 @@ parseTuple p =
 
 parseQuotes :: Parser String
 parseQuotes = parseChar '\"' *> parseSome (parseNonStr "\"") <* parseChar '\"'
+
+parseLine :: Parser String
+parseLine = parseSome (parseNonStr "\n") <* parseChar '\n'
 
 parseNonStr :: String -> Parser Char
 parseNonStr str = Parser $ \s ->

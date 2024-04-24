@@ -5,14 +5,14 @@
 -- pandoc
 -}
 
-module Markdown (parseMarkdown) where
+module Markdown (parseMarkdown, parseBody) where
 
 import Data.Char
 import Data.Either
 import Data.List
 
 import Control.Applicative ((<|>))
-import Document (Document (..), Entry (Text), Header (..))
+import Document (Document (..), Entry (Bold, Paragraph, Text), Header (..))
 import Parsing
 
 data MarkdownElement
@@ -36,7 +36,7 @@ type MarkdownContent = [MarkdownElement]
 
 parseMarkdown :: Parser Document
 parseMarkdown =
-    Document <$> parseHeader (Header "" Nothing Nothing) <*> return []
+    parseAndWith Document (parseHeader (Header "" Nothing Nothing)) (pure [])
 
 parseHeaderDash :: Parser String
 parseHeaderDash = parseBetween "---\n"
@@ -77,19 +77,25 @@ parseDate = parseOr (parseAfter "date: ") (parseAfter "date:")
 parseAuthor :: Parser String
 parseAuthor = parseOr (parseAfter "author: ") (parseAfter "author:")
 
-parseBody :: Parser [Entry]
-parseBody = parseSome parseEntry
+parseBody :: Parser Entry
+parseBody = parseEntry
 
 parseEntry :: Parser Entry
-parseEntry = parseText
+parseEntry = parseParagraph <|> parseBold <|> parseText
 
 parseText :: Parser Entry
 parseText = Parser $ \s -> Right (Text s, "")
 
 parseBold :: Parser Entry
 parseBold = Parser $ \s -> case runParser (parseBetween "**") s of
-    Right (x, xs) -> Right (Text x, xs)
+    Right (x, _) -> runParser (Bold <$> parseEntry) x
     Left e -> Left e
+
+parseParagraph :: Parser Entry
+parseParagraph = Parser $ \s ->
+    case runParser parseLine s of
+        Right (x, _) -> runParser parseEntry x
+        Left _ -> Left "not a paragraph"
 
 -- to test this run
 -- runParser (parser) "string"

@@ -18,6 +18,7 @@ This is a paragraph with **bold**, *italic* and `code` text.
 
 ```
 This is a code block.
+It can be displayed on multiple lines.
 ```
 - list item 1
 - list item 2
