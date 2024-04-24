@@ -12,8 +12,13 @@ import Data.Either
 import Data.List
 
 import Control.Applicative ((<|>))
-import Document (Document (..), Entry (Text), Header (..))
+import Document (Document (..), Entry (Text, CodeBlock), Header (..))
 import Parsing
+
+-- RAPPEL
+-- newtype Parser a = Parser {
+--     runParser :: String -> Either String (a, String)
+-- }
 
 data MarkdownElement
     = MarkdownHeader [MarkdownElement]
@@ -36,7 +41,7 @@ type MarkdownContent = [MarkdownElement]
 
 parseMarkdown :: Parser Document
 parseMarkdown =
-    Document <$> parseHeader (Header "" Nothing Nothing) <*> return []
+    Document <$> parseHeader (Header "" Nothing Nothing) <*> parseBody
 
 parseHeaderDash :: Parser String
 parseHeaderDash = parseBetween "---\n"
@@ -81,7 +86,7 @@ parseBody :: Parser [Entry]
 parseBody = parseSome parseEntry
 
 parseEntry :: Parser Entry
-parseEntry = parseText
+parseEntry = parseText <|> (CodeBlock <$> parseCodeBlock)
 
 parseText :: Parser Entry
 parseText = Parser $ \s -> Right (Text s, "")
@@ -90,6 +95,17 @@ parseBold :: Parser Entry
 parseBold = Parser $ \s -> case runParser (parseBetween "**") s of
     Right (x, xs) -> Right (Text x, xs)
     Left e -> Left e
+
+parseCodeBlockDelim :: Parser String
+parseCodeBlockDelim = parseBetween "```\n"
+
+parseCodeBlock :: Parser [Entry]
+parseCodeBlock = do
+    codeContent <- parseBetween "```\n"
+    let linesOfCode = lines codeContent
+        codeEntries = map Text linesOfCode
+    return codeEntries
+
 
 -- to test this run
 -- runParser (parser) "string"
