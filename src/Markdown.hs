@@ -7,12 +7,8 @@
 
 module Markdown (parseMarkdown, parseBody) where
 
-import Data.Char
-import Data.Either
-import Data.List
-
 import Control.Applicative ((<|>))
-import Document (Document (..), Entry (Bold, Paragraph, Text), Header (..))
+import Document (Document (..), Entry (..), Header (..))
 import Parsing
 
 data MarkdownElement
@@ -81,20 +77,34 @@ parseBody :: Parser Entry
 parseBody = parseEntry
 
 parseEntry :: Parser Entry
-parseEntry = parseParagraph <|> parseBold <|> parseText
+parseEntry = parseParagraph
 
 parseText :: Parser Entry
 parseText = Parser $ \s -> Right (Text s, "")
 
+parseInnerParagraph :: Parser Entry
+parseInnerParagraph = parseBold <|> parseCode <|> parseText
+
 parseBold :: Parser Entry
 parseBold = Parser $ \s -> case runParser (parseBetween "**") s of
-    Right (x, _) -> runParser (Bold <$> parseEntry) x
+    Right (x, _) -> runParser (Bold <$> parseInnerParagraph) x
     Left e -> Left e
+
+parseCode :: Parser Entry
+parseCode = Parser $ \s -> case runParser (parseBetween "`") s of
+    Right (x, _) -> runParser (Code <$> parseInnerParagraph) x
+    Left e -> Left e
+
+-- parseItalic :: Parser Entry
+-- parseItalic = Parser $ \s ->
+--     case runParser (parseChar '*' *> parseSome (parseNonStr "*") <* parseChar '*') s of
+--         Right (x, _) -> runParser (Italic <$> parseInnerParagraph) x
+--         Left e -> Left e
 
 parseParagraph :: Parser Entry
 parseParagraph = Parser $ \s ->
     case runParser parseLine s of
-        Right (x, _) -> runParser parseEntry x
+        Right (x, _) -> runParser parseInnerParagraph x
         Left _ -> Left "not a paragraph"
 
 -- to test this run
