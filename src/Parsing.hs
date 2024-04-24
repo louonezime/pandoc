@@ -19,11 +19,16 @@ module Parsing (
     parseTuple,
     parseQuotes,
     parseSeparators,
+    parseNonStr,
+    parseAfter,
+    parseBetween,
+    parseBefore,
     Parser (..),
 ) where
 
 import Control.Applicative (Alternative (..))
 import Control.Monad ((>=>))
+import Data.List (isPrefixOf)
 
 newtype Parser a = Parser
     { runParser :: String -> Either String (a, String)
@@ -73,9 +78,10 @@ parseOr (Parser p1) (Parser p2) =
     Parser $ \str -> either (const (p2 str)) Right (p1 str)
 
 parseAnd :: Parser a -> Parser b -> Parser (a, b)
-parseAnd (Parser p1) (Parser p2) = Parser (
-        p1 >=> \(x, s1) -> p2 s1 >>= \(y, s2) -> Right ((x, y), s2)
-    )
+parseAnd (Parser p1) (Parser p2) =
+    Parser
+        ( p1 >=> \(x, s1) -> p2 s1 >>= \(y, s2) -> Right ((x, y), s2)
+        )
 
 parseAndWith :: (a -> b -> c) -> Parser a -> Parser b -> Parser c
 parseAndWith f p1 p2 = Parser $ \str ->
@@ -124,3 +130,24 @@ parseNonStr str = Parser $ \s ->
 
 parseSeparators :: Parser String
 parseSeparators = parseSome (parseAnyChar " \t\n")
+
+parseAfter :: String -> Parser String
+parseAfter str = Parser $ \s ->
+    case str `isPrefixOf` s of
+        True -> Right (str, drop (length str) s)
+        False -> Left (str ++ ": not prefix")
+
+parseBefore :: String -> Parser String
+parseBefore str = Parser $ \s ->
+    case subStrIdx s str 0 of
+        -1 -> Left (str ++ ": not a suffix")
+        n -> Right (take n s, drop (n + length str) s)
+
+subStrIdx :: String -> String -> Int -> Int
+subStrIdx "" _ _ = -1
+subStrIdx s target n
+    | take (length target) s == target = n
+    | otherwise = subStrIdx (tail s) target (n + 1)
+
+parseBetween :: String -> Parser String
+parseBetween start = parseAfter start >>= parseBefore
