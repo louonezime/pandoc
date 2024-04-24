@@ -12,7 +12,7 @@ import Data.Either
 import Data.List
 
 import Control.Applicative ((<|>))
-import Document (Document (..), Header (..))
+import Document (Document (..), Entry (Text), Header (..))
 import Parsing
 
 data MarkdownElement
@@ -34,11 +34,8 @@ data MarkdownElement
 
 type MarkdownContent = [MarkdownElement]
 
-createDocFromHeader :: Header -> Document
-createDocFromHeader hd = Document hd []
-
 parseMarkdown :: Parser Document
-parseMarkdown = createDocFromHeader <$> parseHeader (Header "" Nothing Nothing)
+parseMarkdown = Document <$> parseHeader (Header "" Nothing Nothing) <*> return []
 
 parseHeaderDash :: Parser String
 parseHeaderDash = parseBetween "---\n"
@@ -79,6 +76,22 @@ parseDate = parseOr (parseAfter "date: ") (parseAfter "date:")
 parseAuthor :: Parser String
 parseAuthor = parseOr (parseAfter "author: ") (parseAfter "author:")
 
+parseBody :: Parser [Entry]
+parseBody = parseSome parseEntry
+
+parseEntry :: Parser Entry
+parseEntry = parseText
+
+parseText :: Parser Entry
+parseText = Parser $ \s -> Right (Text s, "")
+
+parseBold :: Parser Entry
+parseBold = Parser $ \s -> case runParser (parseBetween "**") s of
+    Right (x, xs) -> Right (Text x, xs)
+    Left e -> Left e
+
+-- to test this run
+-- runParser (parser) "string"
 -- parseMarkdown exampleMarkdown
 -- let exampleMarkdown = ["---\n", "title: Example", "author: John Doe", "date: 2024-04-23",
 -- "---\n", "```\n", "Code block line 1", "Code block line 2", "```", "Rest of the file"]
