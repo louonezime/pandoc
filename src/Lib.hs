@@ -5,10 +5,15 @@
 -- Lib
 -}
 
-module Lib (Options, options, defaultOptions, runPandoc) where
+module Lib (Options (Options), options, defaultOptions, runPandoc) where
 
 import Data.List (isSuffixOf)
-import Document (Document (..), Header (..))
+import Display.Json (renderJson)
+import Display.Markdown (renderMarkdown)
+import Display.Xml (renderXml)
+import Document (Document (..))
+import Parser.Markdown (parseMarkdown)
+import Parsing (Parser (..))
 
 data Format = Markdown | JSON | XML deriving (Show, Enum)
 
@@ -61,12 +66,20 @@ help =
     \   -o      output file\n\
     \   -e      input format (xml, markdown, json)"
 
-dumpPandoc :: Document -> Format -> String
-dumpPandoc _ XML = ""
-dumpPandoc _ JSON = ""
-dumpPandoc _ Markdown = ""
+dumpPandoc :: Format -> Document -> String
+dumpPandoc XML = renderXml
+dumpPandoc JSON = renderJson
+dumpPandoc Markdown = renderMarkdown
 
-runPandoc :: String -> Format -> Format -> String
-runPandoc _ XML = dumpPandoc (Document (Header "test" Nothing Nothing) [])
-runPandoc _ JSON = dumpPandoc (Document (Header "test" Nothing Nothing) [])
-runPandoc _ Markdown = dumpPandoc (Document (Header "test" Nothing Nothing) [])
+parseDocument :: Format -> Parser Document
+parseDocument Markdown = parseMarkdown
+parseDocument _ = Parser $ \_ -> Left "Unimplemented"
+
+getDocument :: Format -> String -> Either String Document
+getDocument f s = case runParser (parseDocument f) s of
+    Right (x, []) -> Right x
+    Left e -> Left e
+    _ -> Left "Bad document given"
+
+runPandoc :: String -> Format -> Format -> Either String String
+runPandoc s i f = dumpPandoc f <$> getDocument i s

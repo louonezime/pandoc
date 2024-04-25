@@ -36,7 +36,8 @@ ghc-options:
 library:
   source-dirs:
     - src
-    - src/display
+    - src/Display
+    - src/Parser
 
 executables:
   mypandoc-exe:

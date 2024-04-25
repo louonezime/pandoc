@@ -5,7 +5,7 @@
 -- JsonDisplayer
 -}
 
-module Json (
+module Display.Json (
     renderJson,
     renderAuthor,
     renderTitle,

@@ -5,7 +5,7 @@
 -- pandoc
 -}
 
-module Markdown (parseMarkdown, parseBody) where
+module Parser.Markdown (parseMarkdown, parseBody) where
 
 import Control.Applicative ((<|>))
 import Document (Document (..), Entry (..), Header (..))

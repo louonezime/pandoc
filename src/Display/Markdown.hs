@@ -5,19 +5,13 @@
 -- Markdown
 -}
 
-module Markdown (
+module Display.Markdown (
     renderMarkdown,
-    renderHeader,
-    renderTitle,
-    renderDate,
-    renderAuthor,
-    renderBody,
-    renderSection,
 ) where
 
+import Display.Json ()
+import Display.Xml ()
 import Document (Document (..), Entry (..), Header (..))
-import Json ()
-import Xml ()
 
 renderMarkdown :: Document -> String
 renderMarkdown (Document hd bdy) = renderHeader hd ++ renderBody bdy
