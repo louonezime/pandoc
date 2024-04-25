@@ -5,7 +5,7 @@
 -- Lib
 -}
 
-module Lib (Options (Options), options, defaultOptions, runPandoc) where
+module Lib (Options (Options), options, defaultOptions, runPandoc, help) where
 
 import Data.List (isSuffixOf)
 import Display.Json (renderJson)
@@ -36,8 +36,8 @@ defaultOptions =
     Options
         { output = Nothing,
           input = Nothing,
-          iformat = Left "No format specified.",
-          oformat = Left "No format specified."
+          iformat = Left "No input format specified.",
+          oformat = Left "No output format specified."
         }
 
 options :: Options -> [String] -> Either String Options
@@ -45,8 +45,8 @@ options opt [] =
     Right (opt {iformat = getInputFormat (iformat opt) (input opt)})
 options opt ("-o" : out : xs) = options opt {output = Just out} xs
 options opt ("-i" : inp : xs) = options opt {input = Just inp} xs
-options opt ("-f" : f : xs) = options opt {iformat = formatFromString f} xs
-options opt ("-e" : f : xs) = options opt {oformat = formatFromString f} xs
+options opt ("-e" : f : xs) = options opt {iformat = formatFromString f} xs
+options opt ("-f" : f : xs) = options opt {oformat = formatFromString f} xs
 options _ ("--help" : _) = Left help
 options _ (opt : _) = Left (opt ++ ": unrecognized option see --help.")
 
@@ -75,11 +75,13 @@ parseDocument :: Format -> Parser Document
 parseDocument Markdown = parseMarkdown
 parseDocument _ = Parser $ \_ -> Left "Unimplemented"
 
+--- To test the program change the [] to _
+
 getDocument :: Format -> String -> Either String Document
 getDocument f s = case runParser (parseDocument f) s of
     Right (x, []) -> Right x
     Left e -> Left e
     _ -> Left "Bad document given"
 
-runPandoc :: String -> Format -> Format -> Either String String
-runPandoc s i f = dumpPandoc f <$> getDocument i s
+runPandoc :: Format -> Format -> String -> Either String String
+runPandoc i f s = dumpPandoc f <$> getDocument i s

@@ -21,25 +21,6 @@ import Parsing (
     parseSome,
  )
 
-data MarkdownElement
-    = MarkdownHeader [MarkdownElement]
-    | MarkdownTitle String
-    | MarkdownAuthor (Maybe String)
-    | MarkdownDate (Maybe String)
-    | MarkdownCodeBlock [String]
-    | MarkdownText [String]
-    | MarkdownItalic MarkdownContent
-    | MarkdownBold MarkdownContent
-    | MarkdownLink String String
-    | MarkdownImage String String
-    | MarkdownParagraph [MarkdownElement]
-    | MarkdownSection String [MarkdownElement]
-    | MarkdownList [MarkdownElement]
-    | MarkdownItem MarkdownContent
-    deriving (Show)
-
-type MarkdownContent = [MarkdownElement]
-
 parseMarkdown :: Parser Document
 parseMarkdown =
     parseAndWith Document (parseHeader (Header "" Nothing Nothing)) (pure [])

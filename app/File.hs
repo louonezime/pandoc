@@ -5,7 +5,7 @@
 -- File
 -}
 
-module File () where
+module File (getInput, getOutput) where
 
 import Control.Exception (IOException, catch)
 import System.Exit (ExitCode (ExitFailure), exitWith)
@@ -21,9 +21,8 @@ import System.IO (
 readError :: IOException -> String -> String
 readError e p = "Couldn't open " ++ p ++ ": " ++ show e
 
-getInput :: Maybe String -> IO String
-getInput Nothing = exitWith (ExitFailure 84) >> return ""
-getInput (Just p) =
+getInput :: String -> IO String
+getInput p =
     catch
         (readFile p)
         ( \e ->
