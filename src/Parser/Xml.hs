@@ -5,10 +5,18 @@
 -- Xml
 -}
 
-module Parser.Xml where
+module Parser.Xml (parseXml) where
 
-import Parsing
-import Document
+import Document (Document (..), Entry (..), Header (..), defaultHeader)
+import Parsing (
+    parseSome,
+    parseNonStr,
+    parseString,
+    parseBetweenTwo,
+    parseAndWith,
+    parseBefore,
+    parseChar,
+    Parser (..))
 
 parseAttributeValue :: Parser String
 parseAttributeValue = parseString "=\"" *> parseSome (parseNonStr "\"")
@@ -63,3 +71,39 @@ parseAuthor hdr = parseBetweenTwo "<author>" "</author>" >>= \authorRes ->
 parseDate :: Header -> Parser Header
 parseDate hdr = parseBetweenTwo "<date>" "</date>" >>= \dateRes ->
     return hdr { date = Just dateRes }
+
+parseXml :: Parser Document
+parseXml =
+    parseAndWith Document (parseHeader defaultHeader) (pure [])
+
+-- parseTextContent :: Parser String
+-- parseTextContent = parseSome (parseSomeChar (['a'..'z'] ++ ['A'..'Z'] ++ " ,.!?"))
+
+-- parseXMLElement :: String -> Parser Entry
+-- parseXMLElement "paragraph" = Paragraph <$> (parseTag "paragraph" *> parseTextContent <* parseTag "/paragraph")
+-- parseXMLElement "bold" = Bold <$> (parseTag "bold" *> parseTextContent <* parseTag "/bold")
+-- parseXMLElement "italic" = Italic <$> (parseTag "italic" *> parseTextContent <* parseTag "/italic")
+-- parseXMLElement "code" = Code <$> (parseTag "code" *> parseTextContent <* parseTag "/code")
+-- parseXMLElement "codeblock" = CodeBlock <$> (parseTag "codeblock" *> parseTextContent <* parseTag "/codeblock")
+-- parseXMLElement "list" = List <$> (parseTag "list" *> parseMany (parseXMLElement "paragraph") <* parseTag "/list")
+-- parseXMLElement "link" = do
+--   url <- parseTag "link" *> parseAttribute "url" <* parseChar '>'
+--   content <- parseTextContent <* parseTag "/link"
+--   return (Link url [Paragraph content])
+-- parseXMLElement "image" = do
+--   url <- parseTag "image" *> parseAttribute "url" <* parseChar '>'
+--   altText <- parseTextContent <* parseTag "/image"
+--   return (Image url [Paragraph altText])
+-- parseXMLElement "section" = do
+--   title <- parseTag "section" *> parseAttribute "title" <* parseChar '>'
+--   content <- parseMany parseXML <* parseTag "/section"
+--   return (Section title content)
+
+-- parseXML :: Parser Document
+-- parseXML = do
+--    parseChevron "document"
+--    header <- parseXMLElement "header"
+--    body <- parseXMLElement "body"
+--    parseEndChevron "document"
+--    return (Document header [body])
+
