@@ -5,7 +5,7 @@
 -- Lib
 -}
 
-module Lib (Options, options, defaultOptions) where
+module Lib (Options (Options), options, defaultOptions) where
 
 data Format = Markdown | JSON | XML deriving (Show, Enum)
 
@@ -36,8 +36,8 @@ options :: Options -> [String] -> Either String Options
 options opt [] = Right opt
 options opt ("-o" : out : xs) = options opt {output = Just out} xs
 options opt ("-i" : inp : xs) = options opt {input = Just inp} xs
-options opt ("-f" : f : xs) = options opt {iformat = (formatFromString f)} xs
-options opt ("-e" : f : xs) = options opt {oformat = (formatFromString f)} xs
+options opt ("-f" : f : xs) = options opt {iformat = formatFromString f} xs
+options opt ("-e" : f : xs) = options opt {oformat = formatFromString f} xs
 options _ ("--help" : _) = Left help
 options _ (opt : _) = Left (opt ++ ": unrecognized option see --help.")
 

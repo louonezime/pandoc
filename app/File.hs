@@ -21,7 +21,7 @@ import System.IO (
 readError :: IOException -> String -> String
 readError e p = "Couldn't open " ++ p ++ ": " ++ show e
 
-getInput :: Maybe String -> IO (String)
+getInput :: Maybe String -> IO String
 getInput Nothing = exitWith (ExitFailure 84) >> return ""
 getInput (Just p) =
     catch
@@ -32,6 +32,6 @@ getInput (Just p) =
                 >> return ""
         )
 
-getOutput :: Maybe String -> IO (Handle)
+getOutput :: Maybe String -> IO Handle
 getOutput Nothing = return stdout
 getOutput (Just s) = openFile s WriteMode

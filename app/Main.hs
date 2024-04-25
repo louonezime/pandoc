@@ -11,7 +11,10 @@ import System.Environment (getArgs)
 import System.Exit (ExitCode (ExitFailure), exitWith)
 import System.IO (hPutStrLn, stderr)
 
-import Lib (Options, defaultOptions, options)
+import Lib (Options (Options), defaultOptions, options)
+
+-- runPandoc :: Options -> IO ()
+-- runPandoc (Options {ofile = Right handler}) = hPutStrLn
 
 checkErrors :: Either String Options -> IO ()
 checkErrors (Right o) = print o
