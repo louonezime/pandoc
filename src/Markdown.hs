@@ -104,11 +104,21 @@ parseCodeBlock = Parser $ \str ->
         Right (codeBlock, rest) -> Right (map Text (lines codeBlock), rest)
         Left err -> Left err
 
--- parseLink :: Parser Entry
--- parseLink = do
---     content <- parseAfter "[" *> parseBefore "]" <* parseChar ']'
---     url <- parseAfter "(" *> parseBefore ")" <* parseChar ')'
---     return (Link (Text content) [Text url])
+parseChar02 :: Char -> Parser Char
+parseChar02 c = Parser $ \str ->
+    case str of
+        (x : xs) -> if c == x
+                    then Right (x, xs)
+                    else runParser (parseChar02 c) xs
+        _ -> Left (c : ": not found in string")
+
+parseLink :: Parser Entry
+parseLink = do
+    _ <- parseChar02 '['
+    description <- parseBefore "]"
+    _ <- parseChar '('
+    url <- parseBefore ")"
+    return (Link (Text url) [Text description])
 
 
 -- to test this run
