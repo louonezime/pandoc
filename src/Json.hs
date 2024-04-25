@@ -41,8 +41,8 @@ parseJsonObject = Parser $ \s -> case runParser
     Left e -> Left e
 
 parseJsonObjectContent :: Parser [(String, [Entry])]
-parseJsonObjectContent = parseSome ((optional (parseSeparators) *> parseKeyValue
-    <* optional (parseSeparators) <* optional (parseChar ',')))
+parseJsonObjectContent = parseSome ((optional (parseSeparators) *>
+    parseKeyValue <* optional (parseSeparators) <* optional (parseChar ',')))
 
 parseKeyValue :: Parser (String, [Entry])
 parseKeyValue = optional (parseSeparators) *>
