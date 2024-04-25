@@ -27,6 +27,7 @@ module Parsing (
     parseCharInStr,
     parseAfter,
     parseBetween,
+    parseBetweenTwo,
     parseBefore,
     parseLine,
     parseTillEmpty,
@@ -174,6 +175,11 @@ subStrIdx s target n
 
 parseBetween :: String -> Parser String
 parseBetween start = parseAfter start >>= parseBefore
+
+parseBetweenTwo :: String -> String -> Parser String
+parseBetweenTwo start end = parseAfter start >>= \_ ->
+    parseBefore end >>= \before ->
+    return before
 
 parseTillEmpty :: Parser a -> Parser [a]
 parseTillEmpty p = Parser $ \str ->
