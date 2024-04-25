@@ -8,6 +8,7 @@
 module Markdown (parseMarkdown, parseBody) where
 
 import Control.Applicative ((<|>))
+import Debug.Trace (traceShowId)
 import Document (Document (..), Entry (..), Header (..))
 import Parsing
 
@@ -80,32 +81,40 @@ parseEntry :: Parser Entry
 parseEntry = parseParagraph
 
 parseText :: Parser Entry
-parseText = Parser $ \s -> Right (Text s, "")
+parseText = Parser $ \s -> Right (Text s, [])
 
-parseInnerParagraph :: Parser Entry
-parseInnerParagraph = parseBold <|> parseCode <|> parseText
+parseFormat :: String -> (Entry -> Entry) -> Parser Entry
+parseFormat sep fmt = Parser $ \s -> case runParser (parseBetween sep) s of
+    Right (x, xs) -> case runParser (fmt <$> parseText) x of
+        Right (y, _) -> Right (y, xs)
+        Left e -> Left e
+    Left e -> Left e
 
 parseBold :: Parser Entry
-parseBold = Parser $ \s -> case runParser (parseBetween "**") s of
-    Right (x, _) -> runParser (Bold <$> parseInnerParagraph) x
-    Left e -> Left e
+parseBold = parseFormat "**" Bold
 
 parseCode :: Parser Entry
-parseCode = Parser $ \s -> case runParser (parseBetween "`") s of
-    Right (x, _) -> runParser (Code <$> parseInnerParagraph) x
-    Left e -> Left e
+parseCode = parseFormat "`" Code
 
--- parseItalic :: Parser Entry
--- parseItalic = Parser $ \s ->
---     case runParser (parseChar '*' *> parseSome (parseNonStr "*") <* parseChar '*') s of
---         Right (x, _) -> runParser (Italic <$> parseInnerParagraph) x
---         Left e -> Left e
+parseItalic :: Parser Entry
+parseItalic = parseFormat "*" Italic
+
+parseFormatElement :: Parser Entry
+parseFormatElement = (Text <$> parseSome (parseNonStr "*`")) <|> parseBold <|> parseItalic <|> parseCode <|> parseText
+
+parseParagraphContent :: Parser [Entry]
+parseParagraphContent = parseMany parseFormatElement
 
 parseParagraph :: Parser Entry
-parseParagraph = Parser $ \s ->
-    case runParser parseLine s of
-        Right (x, _) -> runParser parseInnerParagraph x
-        Left _ -> Left "not a paragraph"
+parseParagraph =
+    Paragraph
+        <$> Parser
+            ( \s -> case runParser parseLine s of
+                Right (x, xs) -> case runParser parseParagraphContent x of
+                    Right (y, _) -> Right (y, xs)
+                    Left _ -> Right ([], xs)
+                Left _ -> Left "Not a paragraph"
+            )
 
 -- to test this run
 -- runParser (parser) "string"
