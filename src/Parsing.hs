@@ -26,6 +26,7 @@ module Parsing (
     parseAfter,
     parseBetween,
     parseBefore,
+    parseCharInStr,
     parseLine,
     parseTillEmpty,
     Parser (..),
@@ -141,14 +142,12 @@ parseSeparators :: Parser String
 parseSeparators = parseSome (parseAnyChar " \t\n")
 
 parseAfter :: String -> Parser String
-parseAfter [] = Parser $ \_ -> Left "Emtpy String"
 parseAfter str = Parser $ \s ->
     case str `isPrefixOf` s of
         True -> Right (str, drop (length str) s)
         False -> Left (str ++ ": not prefix")
 
 parseBefore :: String -> Parser String
-parseBefore [] = Parser $ \_ -> Left "Emtpy String"
 parseBefore str = Parser $ \s ->
     case subStrIdx s str 0 of
         -1 -> Left (str ++ ": not a suffix")
@@ -163,6 +162,14 @@ subStrIdx s target n
 
 parseBetween :: String -> Parser String
 parseBetween start = parseAfter start >>= parseBefore
+
+parseCharInStr :: Char -> Parser Char
+parseCharInStr c = Parser $ \str ->
+    case str of
+        (x : xs) -> if c == x
+                    then Right (x, xs)
+                    else runParser (parseCharInStr c) xs
+        _ -> Left (c : ": not found in string")
 
 parseTillEmpty :: Parser a -> Parser [a]
 parseTillEmpty p = Parser $ \str ->
