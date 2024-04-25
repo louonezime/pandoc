@@ -59,13 +59,9 @@ parseTitle hdr = Parser $ \str ->
         Left err -> Left err
 
 parseAuthor :: Header -> Parser Header
-parseAuthor hdr = Parser $ \str ->
-    case runParser (parseBetweenTwo "<author>" "</author>") str of
-        Right (xs, "") -> Right (hdr {author = Just xs}, "")
-        _ -> Left "Author field invalid"
+parseAuthor hdr = parseBetweenTwo "<author>" "</author>" >>= \authorRes ->
+    return hdr { author = Just authorRes }
 
 parseDate :: Header -> Parser Header
-parseDate hdr = Parser $ \str ->
-    case runParser (parseBetweenTwo "<date>" "</date>") str of
-        Right (xs, "") -> Right (hdr {date = Just xs}, "")
-        _ -> Left "Date field invalid"
+parseDate hdr = parseBetweenTwo "<date>" "</date>" >>= \dateRes ->
+    return hdr { date = Just dateRes }

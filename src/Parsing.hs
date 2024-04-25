@@ -89,19 +89,12 @@ parseOr (Parser p1) (Parser p2) =
     Parser $ \str -> either (const (p2 str)) Right (p1 str)
 
 parseAnd :: Parser a -> Parser b -> Parser (a, b)
-parseAnd (Parser p1) (Parser p2) =
-    Parser
-        ( p1 >=> \(x, s1) -> p2 s1 >>= \(y, s2) -> Right ((x, y), s2)
-        )
+parseAnd p1 p2 = parseAnd' <$> p1 <*> p2
+    where
+        parseAnd' x y = (x, y)
 
 parseAndWith :: (a -> b -> c) -> Parser a -> Parser b -> Parser c
-parseAndWith f p1 p2 = Parser $ \str ->
-    case runParser p1 str of
-        Right (x, xs) ->
-            case runParser p2 xs of
-                Right (y, ys) -> Right (f x y, ys)
-                Left err -> Left err
-        Left errb -> Left errb
+parseAndWith f p1 p2 = f <$> p1 <*> p2
 
 parseMany :: Parser a -> Parser [a]
 parseMany p = Parser $ \str ->
