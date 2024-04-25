@@ -23,6 +23,7 @@ module Parsing (
     parseAfter,
     parseBetween,
     parseBefore,
+    parseCharInStr,
     Parser (..),
 ) where
 
@@ -151,3 +152,11 @@ subStrIdx s target n
 
 parseBetween :: String -> Parser String
 parseBetween start = parseAfter start >>= parseBefore
+
+parseCharInStr :: Char -> Parser Char
+parseCharInStr c = Parser $ \str ->
+    case str of
+        (x : xs) -> if c == x
+                    then Right (x, xs)
+                    else runParser (parseCharInStr c) xs
+        _ -> Left (c : ": not found in string")

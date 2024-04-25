@@ -12,7 +12,7 @@ import Data.Either
 import Data.List
 
 import Control.Applicative ((<|>))
-import Document (Document (..), Entry (Text, CodeBlock, Link), Header (..))
+import Document (Document (..), Entry (Text, CodeBlock, Link, Image), Header (..))
 import Parsing
 
 data MarkdownElement
@@ -104,21 +104,22 @@ parseCodeBlock = Parser $ \str ->
         Right (codeBlock, rest) -> Right (map Text (lines codeBlock), rest)
         Left err -> Left err
 
-parseChar02 :: Char -> Parser Char
-parseChar02 c = Parser $ \str ->
-    case str of
-        (x : xs) -> if c == x
-                    then Right (x, xs)
-                    else runParser (parseChar02 c) xs
-        _ -> Left (c : ": not found in string")
-
 parseLink :: Parser Entry
 parseLink = do
-    _ <- parseChar02 '['
-    description <- parseBefore "]"
+    _ <- parseCharInStr '['
+    content <- parseBefore "]"
     _ <- parseChar '('
     url <- parseBefore ")"
-    return (Link (Text url) [Text description])
+    return (Link (Text url) [Text content])
+
+parseImage :: Parser Entry
+parseImage = do
+    _ <- parseCharInStr '!'
+    _ <- parseChar '['
+    alt <- parseBefore "]"
+    _ <- parseChar '('
+    url <- parseBefore ")"
+    return (Image (Text url) [Text alt])
 
 
 -- to test this run
