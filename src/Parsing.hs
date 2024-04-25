@@ -29,6 +29,7 @@ module Parsing (
     parseBetween,
     parseBetweenTwo,
     parseBefore,
+    parseCharInStr,
     parseLine,
     parseTillEmpty,
     Parser (..),
@@ -89,19 +90,12 @@ parseOr (Parser p1) (Parser p2) =
     Parser $ \str -> either (const (p2 str)) Right (p1 str)
 
 parseAnd :: Parser a -> Parser b -> Parser (a, b)
-parseAnd (Parser p1) (Parser p2) =
-    Parser
-        ( p1 >=> \(x, s1) -> p2 s1 >>= \(y, s2) -> Right ((x, y), s2)
-        )
+parseAnd p1 p2 = parseAnd' <$> p1 <*> p2
+    where
+        parseAnd' x y = (x, y)
 
 parseAndWith :: (a -> b -> c) -> Parser a -> Parser b -> Parser c
-parseAndWith f p1 p2 = Parser $ \str ->
-    case runParser p1 str of
-        Right (x, xs) ->
-            case runParser p2 xs of
-                Right (y, ys) -> Right (f x y, ys)
-                Left err -> Left err
-        Left errb -> Left errb
+parseAndWith f p1 p2 = f <$> p1 <*> p2
 
 parseMany :: Parser a -> Parser [a]
 parseMany p = Parser $ \str ->
@@ -153,14 +147,12 @@ parseSeparators :: Parser String
 parseSeparators = parseSome (parseAnyChar " \t\n")
 
 parseAfter :: String -> Parser String
-parseAfter [] = Parser $ \_ -> Left "Emtpy String"
 parseAfter str = Parser $ \s ->
     case str `isPrefixOf` s of
         True -> Right (str, drop (length str) s)
         False -> Left (str ++ ": not prefix")
 
 parseBefore :: String -> Parser String
-parseBefore [] = Parser $ \_ -> Left "Emtpy String"
 parseBefore str = Parser $ \s ->
     case subStrIdx s str 0 of
         -1 -> Left (str ++ ": not a suffix")
@@ -180,6 +172,14 @@ parseBetweenTwo :: String -> String -> Parser String
 parseBetweenTwo start end = parseAfter start >>= \_ ->
     parseBefore end >>= \before ->
     return before
+
+parseCharInStr :: Char -> Parser Char
+parseCharInStr c = Parser $ \str ->
+    case str of
+        (x : xs) -> if c == x
+                    then Right (x, xs)
+                    else runParser (parseCharInStr c) xs
+        _ -> Left (c : ": not found in string")
 
 parseTillEmpty :: Parser a -> Parser [a]
 parseTillEmpty p = Parser $ \str ->
