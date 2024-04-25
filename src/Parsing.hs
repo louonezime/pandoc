@@ -95,13 +95,7 @@ parseAndWith :: (a -> b -> c) -> Parser a -> Parser b -> Parser c
 parseAndWith f p1 p2 = f <$> p1 <*> p2
 
 parseMany :: Parser a -> Parser [a]
-parseMany p = Parser $ \str ->
-    case runParser p str of
-        Right (x, xs) ->
-            case runParser (parseMany p) xs of
-                Right (y, ys) -> Right (x : y, ys)
-                Left _ -> Right ([x], xs)
-        Left _ -> Right ([], str)
+parseMany p = some p <|> pure []
 
 parseSome :: Parser a -> Parser [a]
 parseSome p = (:) <$> p <*> parseMany p
