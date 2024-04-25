@@ -135,6 +135,14 @@ parseCharInStr c = Parser $ \str ->
                     else runParser (parseCharInStr c) xs
         _ -> Left (c : ": not found in string")
 
+-- parseCharInStr :: Char -> Parser Char
+-- parseCharInStr c = Parser $ \str ->
+--     case str of
+--         (x : xs) -> if c == x
+--                     then Right (x, xs)
+--                     else runParser (parseCharInStr c) xs
+--         _ -> Left (c : ": not found in string")
+
 parseSeparators :: Parser String
 parseSeparators = parseSome (parseAnyChar " \t\n")
 
