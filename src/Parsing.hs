@@ -4,6 +4,9 @@
 -- File description:
 -- Parser
 -}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+
+{-# HLINT ignore "Use lambda-case" #-}
 
 module Parsing (
     parseChar,
@@ -22,11 +25,18 @@ module Parsing (
     parseNonStr,
     parseString,
     parseCharInStr,
+    parseAfter,
+    parseBetween,
+    parseBetweenTwo,
+    parseBefore,
+    parseLine,
+    parseTillEmpty,
     Parser (..),
 ) where
 
 import Control.Applicative (Alternative (..))
 import Control.Monad ((>=>))
+import Data.List (isPrefixOf)
 
 newtype Parser a = Parser
     { runParser :: String -> Either String (a, String)
@@ -123,9 +133,13 @@ parseTuple p =
 parseQuotes :: Parser String
 parseQuotes = parseChar '\"' *> parseSome (parseNonStr "\"") <* parseChar '\"'
 
+parseLine :: Parser String
+parseLine = parseSome (parseNonStr "\n") <* parseChar '\n'
+
 parseNonStr :: String -> Parser Char
 parseNonStr str = Parser $ \s ->
     case s of
+        [] -> Left "No more thing to parse"
         (x : xs) | x `notElem` str -> Right (x, xs)
         _ -> Left (str ++ ": found")
 
@@ -136,4 +150,43 @@ parseCharInStr chars = Parser $ \s ->
     _ -> Left ("Expected one of " ++ chars ++ ", but end of input reached")
 
 parseSeparators :: Parser String
-parseSeparators = parseSome (parseAnyChar " \t\n\r")
+parseSeparators = parseSome (parseAnyChar " \t\n")
+
+parseAfter :: String -> Parser String
+parseAfter [] = Parser $ \_ -> Left "Emtpy String"
+parseAfter str = Parser $ \s ->
+    case str `isPrefixOf` s of
+        True -> Right (str, drop (length str) s)
+        False -> Left (str ++ ": not prefix")
+
+parseBefore :: String -> Parser String
+parseBefore [] = Parser $ \_ -> Left "Emtpy String"
+parseBefore str = Parser $ \s ->
+    case subStrIdx s str 0 of
+        -1 -> Left (str ++ ": not a suffix")
+        n -> Right (take n s, drop (n + length str) s)
+
+subStrIdx :: String -> String -> Int -> Int
+subStrIdx [] _ _ = -1
+subStrIdx _ [] _ = -1
+subStrIdx s target n
+    | take (length target) s == target = n
+    | otherwise = subStrIdx (tail s) target (n + 1)
+
+parseBetween :: String -> Parser String
+parseBetween start = parseAfter start >>= parseBefore
+
+parseBetweenTwo :: String -> String -> Parser String
+parseBetweenTwo start end = parseAfter start >>= \_ ->
+    parseBefore end >>= \before ->
+    return before
+
+parseTillEmpty :: Parser a -> Parser [a]
+parseTillEmpty p = Parser $ \str ->
+    case runParser p str of
+        Right (x, []) -> Right ([x], [])
+        Right (x, xs) ->
+            case runParser (parseMany p) xs of
+                Right (y, ys) -> Right (x : y, ys)
+                Left _ -> Right ([x], xs)
+        Left _ -> Right ([], str)

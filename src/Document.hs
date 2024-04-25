@@ -62,3 +62,4 @@ data Document = Document
     { header :: Header,
       body :: [Entry]
     }
+    deriving (Show)
