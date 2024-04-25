@@ -5,10 +5,18 @@
 -- Xml
 -}
 
-module Parser.Xml where
+module Parser.Xml (parseXml) where
 
-import Parsing
-import Document
+import Document (Document (..), Entry (..), Header (..), defaultHeader)
+import Parsing (
+    parseSome,
+    parseNonStr,
+    parseString,
+    parseBetweenTwo,
+    parseAndWith,
+    parseBefore,
+    parseChar,
+    Parser (..))
 
 parseAttributeValue :: Parser String
 parseAttributeValue = parseString "=\"" *> parseSome (parseNonStr "\"")
@@ -65,6 +73,10 @@ parseAuthor hdr = parseBetweenTwo "<author>" "</author>" >>= \authorRes ->
 parseDate :: Header -> Parser Header
 parseDate hdr = parseBetweenTwo "<date>" "</date>" >>= \dateRes ->
     return hdr { date = Just dateRes }
+
+parseXml :: Parser Document
+parseXml =
+    parseAndWith Document (parseHeader defaultHeader) (pure [])
 
 -- parseTextContent :: Parser String
 -- parseTextContent = parseSome (parseSomeChar (['a'..'z'] ++ ['A'..'Z'] ++ " ,.!?"))
