@@ -8,9 +8,18 @@
 module Markdown (parseMarkdown, parseBody) where
 
 import Control.Applicative ((<|>))
-import Debug.Trace (traceShowId)
 import Document (Document (..), Entry (..), Header (..))
-import Parsing
+import Parsing (
+    Parser (..),
+    parseAfter,
+    parseAndWith,
+    parseBetween,
+    parseLine,
+    parseMany,
+    parseNonStr,
+    parseOr,
+    parseSome,
+ )
 
 data MarkdownElement
     = MarkdownHeader [MarkdownElement]
@@ -100,7 +109,12 @@ parseItalic :: Parser Entry
 parseItalic = parseFormat "*" Italic
 
 parseFormatElement :: Parser Entry
-parseFormatElement = (Text <$> parseSome (parseNonStr "*`")) <|> parseBold <|> parseItalic <|> parseCode <|> parseText
+parseFormatElement =
+    (Text <$> parseSome (parseNonStr "*`"))
+        <|> parseBold
+        <|> parseItalic
+        <|> parseCode
+        <|> parseText
 
 parseParagraphContent :: Parser [Entry]
 parseParagraphContent = parseMany parseFormatElement
