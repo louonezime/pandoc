@@ -6,7 +6,7 @@
 -}
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 
-module Xml (
+module Display.Xml (
     renderXml,
     renderHeader,
     renderTitle,

@@ -4,6 +4,9 @@
 -- File description:
 -- Parser
 -}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+
+{-# HLINT ignore "Use lambda-case" #-}
 
 module Parsing (
     parseChar,
@@ -24,6 +27,8 @@ module Parsing (
     parseBetween,
     parseBefore,
     parseCharInStr,
+    parseLine,
+    parseTillEmpty,
     Parser (..),
 ) where
 
@@ -123,9 +128,13 @@ parseTuple p =
 parseQuotes :: Parser String
 parseQuotes = parseChar '\"' *> parseSome (parseNonStr "\"") <* parseChar '\"'
 
+parseLine :: Parser String
+parseLine = parseSome (parseNonStr "\n") <* parseChar '\n'
+
 parseNonStr :: String -> Parser Char
 parseNonStr str = Parser $ \s ->
     case s of
+        [] -> Left "No more thing to parse"
         (x : xs) | x `notElem` str -> Right (x, xs)
         _ -> Left (str ++ ": found")
 
@@ -145,7 +154,8 @@ parseBefore str = Parser $ \s ->
         n -> Right (take n s, drop (n + length str) s)
 
 subStrIdx :: String -> String -> Int -> Int
-subStrIdx "" _ _ = -1
+subStrIdx [] _ _ = -1
+subStrIdx _ [] _ = -1
 subStrIdx s target n
     | take (length target) s == target = n
     | otherwise = subStrIdx (tail s) target (n + 1)
@@ -160,3 +170,13 @@ parseCharInStr c = Parser $ \str ->
                     then Right (x, xs)
                     else runParser (parseCharInStr c) xs
         _ -> Left (c : ": not found in string")
+
+parseTillEmpty :: Parser a -> Parser [a]
+parseTillEmpty p = Parser $ \str ->
+    case runParser p str of
+        Right (x, []) -> Right ([x], [])
+        Right (x, xs) ->
+            case runParser (parseMany p) xs of
+                Right (y, ys) -> Right (x : y, ys)
+                Left _ -> Right ([x], xs)
+        Left _ -> Right ([], str)
