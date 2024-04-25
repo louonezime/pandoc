@@ -5,28 +5,19 @@
 -- pandoc
 -}
 
-module Parser.Markdown (parseMarkdown, parseBody) where
+module Markdown (parseMarkdown) where
+
+import Data.Char
+import Data.Either
+import Data.List
 
 import Control.Applicative ((<|>))
-import Document (Document (..), Entry (..), Header (..))
-import Parsing (
-    Parser (..),
-    parseAfter,
-    parseAndWith,
-    parseBetween,
-    parseLine,
-    parseMany,
-    parseNonStr,
-    parseOr,
-    parseSome,
-    parseChar,
-    parseCharInStr,
-    parseBefore
- )
+import Document (Document (..), Entry (Text, CodeBlock, Link, Image), Header (..))
+import Parsing
 
 parseMarkdown :: Parser Document
 parseMarkdown =
-    parseAndWith Document (parseHeader (Header "" Nothing Nothing)) (pure [])
+    Document <$> parseHeader (Header "" Nothing Nothing) <*> parseBody
 
 parseHeaderDash :: Parser String
 parseHeaderDash = parseBetween "---\n"
@@ -67,53 +58,20 @@ parseDate = parseOr (parseAfter "date: ") (parseAfter "date:")
 parseAuthor :: Parser String
 parseAuthor = parseOr (parseAfter "author: ") (parseAfter "author:")
 
-parseBody :: Parser Entry
-parseBody = parseEntry
+parseBody :: Parser [Entry]
+parseBody = parseSome parseEntry
 
 parseEntry :: Parser Entry
-parseEntry = parseParagraph <|> (CodeBlock <$> parseCodeBlock) <|> parseLink 
+parseEntry = parseText <|> (CodeBlock <$> parseCodeBlock) <|> parseLink 
     <|> parseImage
 
 parseText :: Parser Entry
-parseText = Parser $ \s -> Right (Text s, [])
-
-parseFormat :: String -> (Entry -> Entry) -> Parser Entry
-parseFormat sep fmt = Parser $ \s -> case runParser (parseBetween sep) s of
-    Right (x, xs) -> case runParser (fmt <$> parseText) x of
-        Right (y, _) -> Right (y, xs)
-        Left e -> Left e
-    Left e -> Left e
+parseText = Parser $ \s -> Right (Text s, "")
 
 parseBold :: Parser Entry
-parseBold = parseFormat "**" Bold
-
-parseCode :: Parser Entry
-parseCode = parseFormat "`" Code
-
-parseItalic :: Parser Entry
-parseItalic = parseFormat "*" Italic
-
-parseFormatElement :: Parser Entry
-parseFormatElement =
-    (Text <$> parseSome (parseNonStr "*`"))
-        <|> parseBold
-        <|> parseItalic
-        <|> parseCode
-        <|> parseText
-
-parseParagraphContent :: Parser [Entry]
-parseParagraphContent = parseMany parseFormatElement
-
-parseParagraph :: Parser Entry
-parseParagraph =
-    Paragraph
-        <$> Parser
-            ( \s -> case runParser parseLine s of
-                Right (x, xs) -> case runParser parseParagraphContent x of
-                    Right (y, _) -> Right (y, xs)
-                    Left _ -> Right ([], xs)
-                Left _ -> Left "Not a paragraph"
-            )
+parseBold = Parser $ \s -> case runParser (parseBetween "**") s of
+    Right (x, xs) -> Right (Text x, xs)
+    Left e -> Left e
 
 parseCodeBlockDelim :: Parser String
 parseCodeBlockDelim = parseBetween "```\n"
@@ -127,19 +85,19 @@ parseCodeBlock = Parser $ \str ->
 parseLink :: Parser Entry
 parseLink = do
     _ <- parseCharInStr '['
-    parsedAlt <- parseBefore "]"
+    alt <- parseBefore "]"
     _ <- parseChar '('
-    parsedUrl <- parseBefore ")"
-    return (Link parsedUrl (Text parsedAlt))
+    url <- parseBefore ")"
+    return (Link url (Text alt))
 
 parseImage :: Parser Entry
 parseImage = do
     _ <- parseCharInStr '!'
     _ <- parseChar '['
-    parsedAlt <- parseBefore "]"
+    alt <- parseBefore "]"
     _ <- parseChar '('
-    parsedUrl <- parseBefore ")"
-    return (Image parsedUrl (Text parsedAlt))
+    url <- parseBefore ")"
+    return (Image url (Text alt))
 
 -- to test this run
 -- runParser (parser) "string"
@@ -151,12 +109,3 @@ parseImage = do
 -- "date: 2024-04-23", "---\n", "Content goes here", "rest of the file"]
 -- parseHeader test
 
--- data Parser a = Parser {
---     runParser :: String -> Maybe (a, String)
--- }
-
--- ---
--- title: Syntaxe MARKDOWN
--- author: Fornes Leo
--- date: 2024-01-01
--- ---
