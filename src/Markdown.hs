@@ -81,11 +81,7 @@ parseBody :: Parser [Entry]
 parseBody = parseSome parseEntry
 
 parseEntry :: Parser Entry
-parseEntry = parseText <|> (CodeBlock <$> parseCodeBlock) <|> parseLink
-
--- before parseCodeBlock adding, git version
--- parseEntry :: Parser Entry
--- parseEntry = parseText
+parseEntry = parseText <|> (CodeBlock <$> parseCodeBlock) <|> parseLink <|> parseImage
 
 parseText :: Parser Entry
 parseText = Parser $ \s -> Right (Text s, "")
@@ -120,7 +116,6 @@ parseImage = do
     _ <- parseChar '('
     url <- parseBefore ")"
     return (Image (Text url) [Text alt])
-
 
 -- to test this run
 -- runParser (parser) "string"
