@@ -81,7 +81,8 @@ parseBody :: Parser [Entry]
 parseBody = parseSome parseEntry
 
 parseEntry :: Parser Entry
-parseEntry = parseText <|> (CodeBlock <$> parseCodeBlock) <|> parseLink <|> parseImage
+parseEntry = parseText <|> (CodeBlock <$> parseCodeBlock) <|> parseLink 
+    <|> parseImage
 
 parseText :: Parser Entry
 parseText = Parser $ \s -> Right (Text s, "")
@@ -103,10 +104,10 @@ parseCodeBlock = Parser $ \str ->
 parseLink :: Parser Entry
 parseLink = do
     _ <- parseCharInStr '['
-    content <- parseBefore "]"
+    alt <- parseBefore "]"
     _ <- parseChar '('
     url <- parseBefore ")"
-    return (Link (Text url) [Text content])
+    return (Link url (Text alt))
 
 parseImage :: Parser Entry
 parseImage = do
@@ -115,7 +116,7 @@ parseImage = do
     alt <- parseBefore "]"
     _ <- parseChar '('
     url <- parseBefore ")"
-    return (Image (Text url) [Text alt])
+    return (Image url (Text alt))
 
 -- to test this run
 -- runParser (parser) "string"
