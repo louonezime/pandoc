@@ -41,6 +41,9 @@
                                     "codeblock": [
                                         [
                                             "This is a code block."
+                                        ],
+                                        [
+                                            "It can be displayed in multiple lines."
                                         ]
                                     ]
                                 },
