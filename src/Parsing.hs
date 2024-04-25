@@ -164,6 +164,14 @@ parseBetweenTwo :: String -> String -> Parser String
 parseBetweenTwo start end = parseAfter start >>= \_ ->
     parseBefore end >>= return
 
+parseCharInStr :: Char -> Parser Char
+parseCharInStr c = Parser $ \str ->
+    case str of
+        (x : xs) -> if c == x
+                    then Right (x, xs)
+                    else runParser (parseCharInStr c) xs
+        _ -> Left (c : ": not found in string")
+
 parseTillEmpty :: Parser a -> Parser [a]
 parseTillEmpty p = Parser $ \str ->
     case runParser p str of
