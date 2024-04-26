@@ -3,7 +3,7 @@ module XmlDisplaySpec (spec) where
 import Test.Hspec
 
 import Document (Document (..), Entry (..), Header (..))
-import Xml
+import Display.Xml
 
 spec :: Spec
 spec = do
@@ -27,10 +27,10 @@ spec = do
             renderParagraph (Paragraph [Text "Hi", Code (Text "Hello")])
                 `shouldBe` "<paragraph>Hi<code>Hello</code></paragraph>"
         it "Image" $ do
-            renderImage (Image "www.perdu.com" [Text "No Image"])
+            renderImage (Image "www.perdu.com" (Text "No Image"))
                 `shouldBe` "<image url=\"www.perdu.com\">No Image</image>"
         it "link" $ do
-            renderLink (Link "www.perdu.com" [Text "No Image"])
+            renderLink (Link "www.perdu.com" (Text "No Image"))
                 `shouldBe` "<link url=\"www.perdu.com\">No Image</link>"
         it "List" $ do
             renderList (List [Paragraph [(Text "www.perdu.com")], Paragraph [(Text "No Image")]])
