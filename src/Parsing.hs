@@ -31,14 +31,13 @@ module Parsing (
     parseCharInStr,
     parseLine,
     parseTillEmpty,
-    parseString,
-    parseCharInStr,
+    parseStringAndThen,
     Parser (..),
 ) where
 
 import Control.Applicative (Alternative (..))
-import Control.Monad ((>=>))
 import Data.List (isPrefixOf)
+import Debug.Trace (traceShowId)
 
 newtype Parser a = Parser
     { runParser :: String -> Either String (a, String)
@@ -89,7 +88,7 @@ parseOr :: Parser a -> Parser a -> Parser a
 parseOr p1 p2 = p1 <|> p2
 
 parseAnd :: Parser a -> Parser b -> Parser (a, b)
-parseAnd p1 p2 = (,) <$> p1 <*> p2
+parseAnd = parseAndWith (,)
 
 parseAndWith :: (a -> b -> c) -> Parser a -> Parser b -> Parser c
 parseAndWith f p1 p2 = f <$> p1 <*> p2
@@ -123,16 +122,17 @@ parseLine = parseSome (parseNonStr "\n") <* parseChar '\n'
 parseNonStr :: String -> Parser Char
 parseNonStr str = Parser $ \s ->
     case s of
-        [] -> Left "No more thing to parse"
+        "" -> Left "No more thing to parse"
         (x : xs) | x `notElem` str -> Right (x, xs)
         _ -> Left (str ++ ": found")
 
 parseCharInStr :: Char -> Parser Char
 parseCharInStr c = Parser $ \str ->
     case str of
-        (x : xs) -> if c == x
-                    then Right (x, xs)
-                    else runParser (parseCharInStr c) xs
+        (x : xs) ->
+            if c == x
+                then Right (x, xs)
+                else runParser (parseCharInStr c) xs
         _ -> Left (c : ": not found in string")
 
 parseSeparators :: Parser String
@@ -161,8 +161,17 @@ parseBetween :: String -> Parser String
 parseBetween start = parseAfter start >>= parseBefore
 
 parseBetweenTwo :: String -> String -> Parser String
-parseBetweenTwo start end = parseAfter start >>= \_ ->
-    parseBefore end >>= return
+parseBetweenTwo start end =
+    parseAfter start >> parseBefore end
+
+parseCharInStr :: Char -> Parser Char
+parseCharInStr c = Parser $ \str ->
+    case str of
+        (x : xs) ->
+            if c == x
+                then Right (x, xs)
+                else runParser (parseCharInStr c) xs
+        _ -> Left (c : ": not found in string")
 
 parseCharInStr :: Char -> Parser Char
 parseCharInStr c = Parser $ \str ->
@@ -181,3 +190,11 @@ parseTillEmpty p = Parser $ \str ->
                 Right (y, ys) -> Right (x : y, ys)
                 Left _ -> Right ([x], xs)
         Left _ -> Right ([], str)
+
+parseStringAndThen :: Parser String -> Parser b -> Parser b
+parseStringAndThen p1 p2 = Parser $ \s -> case runParser p1 s of
+    Right ([], _) -> Left "Empty Result"
+    Right (x, xs) -> case runParser p2 x of
+        Right (y, _) -> Right (y, xs)
+        Left e -> Left e
+    Left e -> Left e

@@ -5,23 +5,23 @@
 -- pandoc
 -}
 
-module Parser.Markdown (parseMarkdown, parseBody) where
+module Parser.Markdown (parseMarkdown, parseBody, parseLink) where
 
 import Control.Applicative ((<|>))
+import Debug.Trace (traceShowId)
 import Document (Document (..), Entry (..), Header (..))
 import Parsing (
     Parser (..),
     parseAfter,
     parseAndWith,
     parseBetween,
+    parseBetweenTwo,
     parseLine,
-    parseMany,
     parseNonStr,
     parseOr,
     parseSome,
-    parseChar,
-    parseCharInStr,
-    parseBefore
+    parseStringAndThen,
+    parseTillEmpty,
  )
 
 parseMarkdown :: Parser Document
@@ -71,18 +71,15 @@ parseBody :: Parser Entry
 parseBody = parseEntry
 
 parseEntry :: Parser Entry
-parseEntry = parseParagraph <|> (CodeBlock <$> parseCodeBlock) <|> parseLink 
-    <|> parseImage
+parseEntry =
+    parseParagraph
+        <|> (CodeBlock <$> parseCodeBlock)
 
 parseText :: Parser Entry
 parseText = Parser $ \s -> Right (Text s, [])
 
 parseFormat :: String -> (Entry -> Entry) -> Parser Entry
-parseFormat sep fmt = Parser $ \s -> case runParser (parseBetween sep) s of
-    Right (x, xs) -> case runParser (fmt <$> parseText) x of
-        Right (y, _) -> Right (y, xs)
-        Left e -> Left e
-    Left e -> Left e
+parseFormat sep fmt = parseStringAndThen (parseBetween sep) (fmt <$> parseText)
 
 parseBold :: Parser Entry
 parseBold = parseFormat "**" Bold
@@ -93,23 +90,49 @@ parseCode = parseFormat "`" Code
 parseItalic :: Parser Entry
 parseItalic = parseFormat "*" Italic
 
+parseBoldItalic :: Parser Entry
+parseBoldItalic = parseFormat "***" (Italic <$> Bold)
+
 parseFormatElement :: Parser Entry
 parseFormatElement =
-    (Text <$> parseSome (parseNonStr "*`"))
+    (Text <$> parseSome (parseNonStr "*`[!"))
+        <|> parseBoldItalic
         <|> parseBold
         <|> parseItalic
         <|> parseCode
+        <|> parseLink
+        <|> parseImage
+        <|> parseText
+
+parseLinkFormat :: Parser Entry
+parseLinkFormat =
+    (Text <$> parseSome (parseNonStr "*`!"))
+        <|> parseBoldItalic
+        <|> parseBold
+        <|> parseItalic
+        <|> parseCode
+        <|> parseImage
+        <|> parseText
+
+parseImageFormat :: Parser Entry
+parseImageFormat =
+    (Text <$> parseSome (parseNonStr "*`!"))
+        <|> parseBoldItalic
+        <|> parseBold
+        <|> parseItalic
+        <|> parseCode
+        <|> parseLink
         <|> parseText
 
 parseParagraphContent :: Parser [Entry]
-parseParagraphContent = parseMany parseFormatElement
+parseParagraphContent = parseTillEmpty parseFormatElement
 
 parseParagraph :: Parser Entry
 parseParagraph =
     Paragraph
         <$> Parser
             ( \s -> case runParser parseLine s of
-                Right (x, xs) -> case runParser parseParagraphContent x of
+                Right (x, xs) -> case runParser parseParagraphContent (traceShowId x) of
                     Right (y, _) -> Right (y, xs)
                     Left _ -> Right ([], xs)
                 Left _ -> Left "Not a paragraph"
@@ -124,39 +147,33 @@ parseCodeBlock = Parser $ \str ->
         Right (codeBlock, rest) -> Right (map Text (lines codeBlock), rest)
         Left err -> Left err
 
+parseLinkAlt :: Parser Entry
+parseLinkAlt = parseStringAndThen (parseBetweenTwo "[" "]") parseLinkFormat
+
+parseImageAlt :: Parser Entry
+parseImageAlt = parseStringAndThen (parseBetweenTwo "![" "]") parseImageFormat
+
+parseUrl :: Parser String
+parseUrl = parseBetweenTwo "(" ")"
+
 parseLink :: Parser Entry
-parseLink = do
-    _ <- parseCharInStr '['
-    parsedAlt <- parseBefore "]"
-    _ <- parseChar '('
-    parsedUrl <- parseBefore ")"
-    return (Link parsedUrl (Text parsedAlt))
+parseLink =
+    uncurry Link
+        <$> Parser
+            ( \s -> case runParser parseLinkAlt s of
+                Right (x, xs) -> case runParser parseUrl xs of
+                    Right (y, ys) -> Right ((y, x), ys)
+                    Left e -> Left e
+                Left e -> Left e
+            )
 
 parseImage :: Parser Entry
 parseImage = do
-    _ <- parseCharInStr '!'
-    _ <- parseChar '['
-    parsedAlt <- parseBefore "]"
-    _ <- parseChar '('
-    parsedUrl <- parseBefore ")"
-    return (Image parsedUrl (Text parsedAlt))
-
--- to test this run
--- runParser (parser) "string"
--- parseMarkdown exampleMarkdown
--- let exampleMarkdown = ["---\n", "title: Example", "author: John Doe", "date: 2024-04-23",
--- "---\n", "```\n", "Code block line 1", "Code block line 2", "```", "Rest of the file"]
--- parseCodeBlock test
--- let exampleMarkdown = ["---\n", "title: Syntaxe MARKDOWN", "author: John Doe",
--- "date: 2024-04-23", "---\n", "Content goes here", "rest of the file"]
--- parseHeader test
-
--- data Parser a = Parser {
---     runParser :: String -> Maybe (a, String)
--- }
-
--- ---
--- title: Syntaxe MARKDOWN
--- author: Fornes Leo
--- date: 2024-01-01
--- ---
+    uncurry Image
+        <$> Parser
+            ( \s -> case runParser parseImageAlt s of
+                Right (x, xs) -> case runParser parseUrl xs of
+                    Right (y, ys) -> Right ((y, x), ys)
+                    Left e -> Left e
+                Left e -> Left e
+            )

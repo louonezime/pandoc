@@ -23,8 +23,8 @@ parseAttributeValue :: Parser String
 parseAttributeValue = parseString "=\"" *> parseSome (parseNonStr "\"")
 
 parseAttributeName :: String -> Parser String
-parseAttributeName str
-    = parseString ("<" ++ str ++ " ") *> parseSome (parseNonStr " =")
+parseAttributeName str =
+    parseString ("<" ++ str ++ " ") *> parseSome (parseNonStr " =")
 
 parseChevron :: Parser String
 parseChevron = parseChar '<' *> parseSome (parseNonStr "</>") <* parseChar '>'
@@ -43,7 +43,7 @@ parseHeader hdr = Parser $ \str ->
 
 parseHeaderTags :: [String] -> Header -> Header
 parseHeaderTags [] hdr = hdr
-parseHeaderTags (x:xs) hdr = case runParser (parseHeaderTag hdr) x of
+parseHeaderTags (x : xs) hdr = case runParser (parseHeaderTag hdr) x of
     Right (l, "") -> parseHeaderTags xs l
     _ -> hdr
 
@@ -66,8 +66,9 @@ parseTitle hdr = Parser $ \str ->
         Left err -> Left err
 
 parseAuthor :: Header -> Parser Header
-parseAuthor hdr = parseBetweenTwo "<author>" "</author>" >>= \authorRes ->
-    return hdr { author = Just authorRes }
+parseAuthor hdr =
+    parseBetweenTwo "<author>" "</author>" >>= \authorRes ->
+        return hdr {author = Just authorRes}
 
 parseDate :: Header -> Parser Header
 parseDate hdr = parseBetweenTwo "<date>" "</date>" >>= \dateRes ->
