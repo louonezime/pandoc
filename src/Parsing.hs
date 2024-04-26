@@ -87,15 +87,13 @@ parseOr :: Parser a -> Parser a -> Parser a
 parseOr p1 p2 = p1 <|> p2
 
 parseAnd :: Parser a -> Parser b -> Parser (a, b)
-parseAnd p1 p2 = parseAnd' <$> p1 <*> p2
-    where
-        parseAnd' x y = (x, y)
+parseAnd p1 p2 = (,) <$> p1 <*> p2
 
 parseAndWith :: (a -> b -> c) -> Parser a -> Parser b -> Parser c
 parseAndWith f p1 p2 = f <$> p1 <*> p2
 
 parseMany :: Parser a -> Parser [a]
-parseMany p = some p <|> pure []
+parseMany p = many p <|> pure []
 
 parseSome :: Parser a -> Parser [a]
 parseSome p = (:) <$> p <*> parseMany p
