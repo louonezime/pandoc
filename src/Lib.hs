@@ -5,7 +5,14 @@
 -- Lib
 -}
 
-module Lib (Options (Options), optionsParser, defaultOptions, runPandoc, help, Format) where
+module Lib (
+    Options (Options),
+    optionsParser,
+    defaultOptions,
+    runPandoc,
+    help,
+    Format,
+) where
 
 import Data.List (isSuffixOf)
 import Display.Json (renderJson)

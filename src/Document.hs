@@ -4,6 +4,7 @@
 -- File description:
 -- Lib
 -}
+{-# OPTIONS_GHC -Wno-partial-fields #-}
 
 module Document (Header (..), Entry (..), Document (..), defaultHeader) where
 
