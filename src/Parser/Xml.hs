@@ -73,8 +73,14 @@ parseDate hdr = parseBetweenTwo "<date>" "</date>" >>= \dateRes ->
     return hdr { date = Just dateRes }
 
 parseXml :: Parser Document
-parseXml =
-    parseAndWith Document (parseHeader defaultHeader) (pure [])
+parseXml = case runParser (parseBetweenTwo "<document>\n" "</document>") str of
+    Right (xs, _) -> runParser (parseAndWith Document (parseHeader defaultHeader) (parseContent $ pure [])) xs
+    _ -> Left "Invalid XML, no document tag found"
+
+parseContent :: Parser Entry
+parseContent = case runParser (parseBetweenTwo "<document>\n" "</document>") str of
+    Right (xs, _) -> runParser parseEntry xs
+    _ -> Left "No body found"
 
 -- parseTextContent :: Parser String
 -- parseTextContent = parseSome (parseSomeChar (['a'..'z'] ++ ['A'..'Z'] ++ " ,.!?"))
@@ -98,12 +104,3 @@ parseXml =
 --   title <- parseTag "section" *> parseAttribute "title" <* parseChar '>'
 --   content <- parseMany parseXML <* parseTag "/section"
 --   return (Section title content)
-
--- parseXML :: Parser Document
--- parseXML = do
---    parseChevron "document"
---    header <- parseXMLElement "header"
---    body <- parseXMLElement "body"
---    parseEndChevron "document"
---    return (Document header [body])
-
