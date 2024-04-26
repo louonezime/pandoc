@@ -149,14 +149,3 @@ parseEntry str =
     parseCode str <|>
     parseLink str <|>
     parseImage str
-
---     Text <$> parseBetweenTwo "<paragraph>" "</paragraph>" *> parseEntry <|>
---     Bold <$> (parseBetweenTwo"yo" "<bold>" "</bold>" *> parseEntry)
-    -- <|>
-    -- Italic <$> (parseBetweenTwo "<italic>" "</italic>" *> parseEntry) <|>
-    -- Code <$> (parseBetweenTwo "<code>" "</code>" *> parseEntry) <|>
-    -- Section <$> (parseAttribute "<section title=\"" "\">" >>= \title -> many parseEntry) <|>
-    -- CodeBlock <$> (parseBetweenTwo "<codeblock>" "</codeblock>" >>= \content -> many parseEntry) <|>
-    -- List <$> (parseBetweenTwo "<list>" "</list>" >>= \content -> many parseEntry) <|>
-    -- Link <$> (parseBetweenTwo "<link url=\"" "\">" >>= \url -> parseEntry) <|>
-    -- Image <$> (parseBetweenTwo "<image url=\"" "\">" >>= \url -> (parseBetweenTwo "<paragraph>" "</paragraph>"))
