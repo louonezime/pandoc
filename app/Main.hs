@@ -11,8 +11,6 @@ import System.Environment (getArgs)
 import System.Exit (ExitCode (ExitFailure), exitWith)
 import System.IO (Handle, hClose, hPutStrLn, stderr)
 
-import Data.Functor
-
 import Lib (
     Format,
     Options (Options),

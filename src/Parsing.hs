@@ -23,12 +23,16 @@ module Parsing (
     parseQuotes,
     parseSeparators,
     parseNonStr,
+    parseString,
     parseAfter,
     parseBetween,
+    parseBetweenTwo,
     parseBefore,
     parseCharInStr,
     parseLine,
     parseTillEmpty,
+    parseString,
+    parseCharInStr,
     Parser (..),
 ) where
 
@@ -45,7 +49,6 @@ instance Functor Parser where
 
 instance Applicative Parser where
     pure x = Parser $ \str -> Right (x, str)
-
     (Parser p1) <*> (Parser p2) = Parser $ \str -> case p1 str of
         Right (fct, xs) -> case p2 xs of
             Right (x, ys) -> Right (fct x, ys)
@@ -79,33 +82,20 @@ parseAnyChar str = Parser $ \s ->
 parseSomeChar :: String -> Parser Char
 parseSomeChar = foldr ((<|>) . parseChar) empty
 
+parseString :: String -> Parser String
+parseString str = parseMany (parseSomeChar str)
+
 parseOr :: Parser a -> Parser a -> Parser a
-parseOr (Parser p1) (Parser p2) =
-    Parser $ \str -> either (const (p2 str)) Right (p1 str)
+parseOr p1 p2 = p1 <|> p2
 
 parseAnd :: Parser a -> Parser b -> Parser (a, b)
-parseAnd (Parser p1) (Parser p2) =
-    Parser
-        ( p1 >=> \(x, s1) -> p2 s1 >>= \(y, s2) -> Right ((x, y), s2)
-        )
+parseAnd p1 p2 = (,) <$> p1 <*> p2
 
 parseAndWith :: (a -> b -> c) -> Parser a -> Parser b -> Parser c
-parseAndWith f p1 p2 = Parser $ \str ->
-    case runParser p1 str of
-        Right (x, xs) ->
-            case runParser p2 xs of
-                Right (y, ys) -> Right (f x y, ys)
-                Left err -> Left err
-        Left errb -> Left errb
+parseAndWith f p1 p2 = f <$> p1 <*> p2
 
 parseMany :: Parser a -> Parser [a]
-parseMany p = Parser $ \str ->
-    case runParser p str of
-        Right (x, xs) ->
-            case runParser (parseMany p) xs of
-                Right (y, ys) -> Right (x : y, ys)
-                Left _ -> Right ([x], xs)
-        Left _ -> Right ([], str)
+parseMany p = many p <|> pure []
 
 parseSome :: Parser a -> Parser [a]
 parseSome p = (:) <$> p <*> parseMany p
@@ -122,8 +112,7 @@ parseNumbers = some (parseSomeChar ['0' .. '9'])
 
 parseTuple :: Parser a -> Parser (a, a)
 parseTuple p =
-    parseChar '(' *> parseAnd p (parseChar ',')
-        >>= \(x, _) -> parseAnd p (parseChar ')') >>= \(y, _) -> return (x, y)
+    (,) <$> (parseChar '(' *> p) <*> (parseChar ',' *> p) <* parseChar ')'
 
 parseQuotes :: Parser String
 parseQuotes = parseChar '\"' *> parseSome (parseNonStr "\"") <* parseChar '\"'
@@ -162,6 +151,10 @@ subStrIdx s target n
 
 parseBetween :: String -> Parser String
 parseBetween start = parseAfter start >>= parseBefore
+
+parseBetweenTwo :: String -> String -> Parser String
+parseBetweenTwo start end = parseAfter start >>= \_ ->
+    parseBefore end >>= return
 
 parseCharInStr :: Char -> Parser Char
 parseCharInStr c = Parser $ \str ->
