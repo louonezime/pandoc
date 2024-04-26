@@ -160,8 +160,7 @@ parseBetween start = parseAfter start >>= parseBefore
 
 parseBetweenTwo :: String -> String -> Parser String
 parseBetweenTwo start end = parseAfter start >>= \_ ->
-    parseBefore end >>= \before ->
-    return before
+    parseBefore end >>= return
 
 parseTillEmpty :: Parser a -> Parser [a]
 parseTillEmpty p = Parser $ \str ->
