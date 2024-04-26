@@ -35,7 +35,7 @@ parseEndChevron =
 parseHeader :: Header -> Parser Header
 parseHeader hdr = Parser $ \str ->
     case runParser (parseTitle hdr) str of
-        Right (l, xs) -> case runParser (parseBefore "</header>") xs of
+        Right (l, xs) -> case runParser (parseBefore "</header>\n") xs of
             Right (x, _) -> Right (parseHeaderTags (lines x) l, "")
             _ -> Left "Header incomplete"
         Left err -> Left err
@@ -51,9 +51,7 @@ parseHeaderTag hdr = Parser $ \str ->
     case runParser parseChevron str of
         Right ("author", _) -> runParser (parseAuthor hdr) str
         Right ("date", _) -> runParser (parseDate hdr) str
-        _ -> case runParser (parseEndChevron) str of
-            Right ("header", _) -> Right (hdr, "")
-            _ -> Left "Invalid tag"
+        _ -> Left "Invalid tag"
 
 parseTitle :: Header -> Parser Header
 parseTitle hdr = Parser $ \str ->
