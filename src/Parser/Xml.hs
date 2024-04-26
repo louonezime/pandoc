@@ -7,6 +7,7 @@
 
 module Parser.Xml (parseXml) where
 
+import Control.Applicative (Alternative (..))
 import Document (Document (..), Entry (..), Header (..), defaultHeader)
 import Parsing (
     parseSome,
@@ -98,10 +99,59 @@ parseContent = Parser $ \str ->
         Left err -> Left err
         _ -> Left "No body found"
 
-parseEntry :: Parser Entry
-parseEntry =
-    Text <$> parseBetweenTwo "<paragraph>" "</paragraph>" *> parseEntry <|>
-    Bold <$> (parseBetweenTwo "<bold>" "</bold>" *> parseEntry)
+parseParagraph :: Parser Entry
+parseParagraph =
+    Paragraph <$> (parseString "<paragraph>" *> parseBetweenTwo "" "</paragraph>")
+
+parseBold :: Parser Entry
+parseBold =
+    Bold <$> (parseString "<bold>" *> parseBetweenTwo "" "</bold>")
+
+parseItalic :: Parser Entry
+parseItalic =
+    Italic <$> (parseString "<italic>" *> parseBetweenTwo "" "</italic>")
+
+parseCode :: Parser Entry
+parseCode =
+    Code <$> (parseString "<code>" *> parseBetweenTwo "" "</code>")
+
+parseLink :: Parser Entry
+parseLink = Parser $ \str ->
+    case runParser (parseBefore "</link>") str of
+        Right (x, _) -> case runParser (parseAttributeName "link") x of
+            Right ("url", xs) -> case runParser parseAttributeValue xs of
+                Right (y, ys) -> case runParser (parseString "\">") ys of
+                    Right (_, zs) -> Right (Link {url = y, alt = zs}, "")
+                    _ -> Left "URL field not closed properly"
+                _ -> Left "URL field invalid"
+            Right (x, _) -> Left ("Field " ++ x ++ " is invalid")
+            Left err -> Left err
+        _ -> Left "Invalid XML, no end link found"
+
+parseImage :: Parser Entry
+parseImage = Parser $ \str ->
+    case runParser (parseBefore "</image>") str of
+        Right (x, _) -> case runParser (parseAttributeName "image") x of
+            Right ("url", xs) -> case runParser parseAttributeValue xs of
+                Right (y, ys) -> case runParser (parseString "\">") ys of
+                    Right (_, zs) -> Right (Image {url = y, alt = zs}, "")
+                    _ -> Left "URL field not closed properly"
+                _ -> Left "URL field invalid"
+            Right (x, _) -> Left ("Field " ++ x ++ " is invalid")
+            Left err -> Left err
+        _ -> Left "Invalid XML, no end image found"
+
+parseEntry :: String -> Parser Entry
+parseEntry str =
+    parseParagraph str <|>
+    parseBold str <|>
+    parseItalic str <|>
+    parseCode str <|>
+    parseLink str <|>
+    parseImage str
+
+--     Text <$> parseBetweenTwo "<paragraph>" "</paragraph>" *> parseEntry <|>
+--     Bold <$> (parseBetweenTwo"yo" "<bold>" "</bold>" *> parseEntry)
     -- <|>
     -- Italic <$> (parseBetweenTwo "<italic>" "</italic>" *> parseEntry) <|>
     -- Code <$> (parseBetweenTwo "<code>" "</code>" *> parseEntry) <|>
