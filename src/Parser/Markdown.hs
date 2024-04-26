@@ -19,6 +19,9 @@ import Parsing (
     parseNonStr,
     parseOr,
     parseSome,
+    parseChar,
+    parseCharInStr,
+    parseBefore
  )
 
 parseMarkdown :: Parser Document
@@ -68,7 +71,8 @@ parseBody :: Parser Entry
 parseBody = parseEntry
 
 parseEntry :: Parser Entry
-parseEntry = parseParagraph
+parseEntry = parseParagraph <|> (CodeBlock <$> parseCodeBlock) <|> parseLink 
+    <|> parseImage
 
 parseText :: Parser Entry
 parseText = Parser $ \s -> Right (Text s, [])
@@ -110,6 +114,32 @@ parseParagraph =
                     Left _ -> Right ([], xs)
                 Left _ -> Left "Not a paragraph"
             )
+
+parseCodeBlockDelim :: Parser String
+parseCodeBlockDelim = parseBetween "```\n"
+
+parseCodeBlock :: Parser [Entry]
+parseCodeBlock = Parser $ \str ->
+    case runParser parseCodeBlockDelim str of
+        Right (codeBlock, rest) -> Right (map Text (lines codeBlock), rest)
+        Left err -> Left err
+
+parseLink :: Parser Entry
+parseLink = do
+    _ <- parseCharInStr '['
+    parsedAlt <- parseBefore "]"
+    _ <- parseChar '('
+    parsedUrl <- parseBefore ")"
+    return (Link parsedUrl (Text parsedAlt))
+
+parseImage :: Parser Entry
+parseImage = do
+    _ <- parseCharInStr '!'
+    _ <- parseChar '['
+    parsedAlt <- parseBefore "]"
+    _ <- parseChar '('
+    parsedUrl <- parseBefore ")"
+    return (Image parsedUrl (Text parsedAlt))
 
 -- to test this run
 -- runParser (parser) "string"
