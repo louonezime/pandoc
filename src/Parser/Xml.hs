@@ -73,34 +73,40 @@ parseDate hdr = parseBetweenTwo "<date>" "</date>" >>= \dateRes ->
     return hdr { date = Just dateRes }
 
 parseXml :: Parser Document
-parseXml = case runParser (parseBetweenTwo "<document>\n" "</document>") str of
-    Right (xs, _) -> runParser (parseAndWith Document (parseHeader defaultHeader) (parseContent $ pure [])) xs
-    _ -> Left "Invalid XML, no document tag found"
+parseXml = Parser $ \str ->
+    case runParser (parseBetweenTwo "<document>\n" "</document>") str of
+        Right (xs, _) -> case runParser (parseHeader defaultHeader) xs of
+            Right (hdr, ys) -> case runParser (parseContent) str of
+                Right (content, _) -> Right (Document hdr content, "")
+                Left err -> Left err
+                _ -> Left "Invalid XML, no content found"
+            _ -> Left "Invalid XML, no header found"
+        _ -> Left "Invalid XML, no document tag found"
 
-parseContent :: Parser Entry
-parseContent = case runParser (parseBetweenTwo "<document>\n" "</document>") str of
-    Right (xs, _) -> runParser parseEntry xs
-    _ -> Left "No body found"
+parseEntries :: [String] -> [Entry]
+parseEntries [] = []
+parseEntries (x:xs) = case runParser parseEntry x of
+    Right (entry, "") -> entry : parseEntries xs
+    _ -> parseEntries xs
 
--- parseTextContent :: Parser String
--- parseTextContent = parseSome (parseSomeChar (['a'..'z'] ++ ['A'..'Z'] ++ " ,.!?"))
+parseContent :: Parser [Entry]
+parseContent = Parser $ \str ->
+    case runParser (parseBefore "</header>\n") str of
+        Right (_, xs) -> case runParser (parseBetweenTwo "<body>\n" "</body>\n") xs of
+            Right (ys, _) -> parseEntries (lines ys)
+            Left err -> Left err
+        Left err -> Left err
+        _ -> Left "No body found"
 
--- parseXMLElement :: String -> Parser Entry
--- parseXMLElement "paragraph" = Paragraph <$> (parseTag "paragraph" *> parseTextContent <* parseTag "/paragraph")
--- parseXMLElement "bold" = Bold <$> (parseTag "bold" *> parseTextContent <* parseTag "/bold")
--- parseXMLElement "italic" = Italic <$> (parseTag "italic" *> parseTextContent <* parseTag "/italic")
--- parseXMLElement "code" = Code <$> (parseTag "code" *> parseTextContent <* parseTag "/code")
--- parseXMLElement "codeblock" = CodeBlock <$> (parseTag "codeblock" *> parseTextContent <* parseTag "/codeblock")
--- parseXMLElement "list" = List <$> (parseTag "list" *> parseMany (parseXMLElement "paragraph") <* parseTag "/list")
--- parseXMLElement "link" = do
---   url <- parseTag "link" *> parseAttribute "url" <* parseChar '>'
---   content <- parseTextContent <* parseTag "/link"
---   return (Link url [Paragraph content])
--- parseXMLElement "image" = do
---   url <- parseTag "image" *> parseAttribute "url" <* parseChar '>'
---   altText <- parseTextContent <* parseTag "/image"
---   return (Image url [Paragraph altText])
--- parseXMLElement "section" = do
---   title <- parseTag "section" *> parseAttribute "title" <* parseChar '>'
---   content <- parseMany parseXML <* parseTag "/section"
---   return (Section title content)
+parseEntry :: Parser Entry
+parseEntry =
+    Text <$> parseBetweenTwo "<paragraph>" "</paragraph>" *> parseEntry <|>
+    Bold <$> (parseBetweenTwo "<bold>" "</bold>" *> parseEntry)
+    -- <|>
+    -- Italic <$> (parseBetweenTwo "<italic>" "</italic>" *> parseEntry) <|>
+    -- Code <$> (parseBetweenTwo "<code>" "</code>" *> parseEntry) <|>
+    -- Section <$> (parseAttribute "<section title=\"" "\">" >>= \title -> many parseEntry) <|>
+    -- CodeBlock <$> (parseBetweenTwo "<codeblock>" "</codeblock>" >>= \content -> many parseEntry) <|>
+    -- List <$> (parseBetweenTwo "<list>" "</list>" >>= \content -> many parseEntry) <|>
+    -- Link <$> (parseBetweenTwo "<link url=\"" "\">" >>= \url -> parseEntry) <|>
+    -- Image <$> (parseBetweenTwo "<image url=\"" "\">" >>= \url -> (parseBetweenTwo "<paragraph>" "</paragraph>"))
