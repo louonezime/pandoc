@@ -106,9 +106,9 @@ spec = do
 
     describe "parseSome" $ do
         it "parses at least one digit" $ do
-            let parser = parseSome (parseCharInStr ['0'..'9'])
+            let parser = parseSome (parseCharInStr '1')
             let result = runParser parser "123abc"
-            result `shouldBe` Right ("123", "abc")
+            result `shouldBe` Right ("1", "23abc")
 
         it "fails if no match is found" $ do
             let parser = parseSome (parseChar 'x')
@@ -186,14 +186,14 @@ spec = do
 
     describe "parseCharInStr" $ do
         it "parses a character in the specified string" $ do
-            let parser = parseCharInStr "aeiou"
-            let result = runParser parser "e"
-            result `shouldBe` Right ('e', "")
+            let parser = parseCharInStr 'a'
+            let result = runParser parser "aee"
+            result `shouldBe` Right ('a', "ee")
 
         it "fails if the character is not in the specified string" $ do
-            let parser = parseCharInStr "aeiou"
+            let parser = parseCharInStr 'a'
             let result = runParser parser "h"
-            result `shouldBe` Left "Expected one of aeiou, but end of input reached"
+            result `shouldBe` Left "a: not found in string"
 
     describe "parseSeparators" $ do
         it "parses whitespace characters" $ do

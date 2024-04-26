@@ -51,11 +51,11 @@ spec = do
         it "render codeblock" $ do
             renderEntry (CodeBlock [(Paragraph [(Text "int main (void)")])]) `shouldBe` "{\"codeblock\":[[\"int main (void)\"]]}"
 
-        -- it "render link" $ do
-        --     renderEntry (Link ("https://perdu.com") [Text "perdu"]) `shouldBe` "{\"link\":{\"url\":\"https://perdu.com\",\"content\":[\"perdu\"]}}"
+        it "render link" $ do
+            renderEntry (Link ("https://perdu.com") (Text "perdu")) `shouldBe` "{\"link\":{\"url\":\"https://perdu.com\",\"content\":[\"perdu\"]}}"
 
-        -- it "render image" $ do
-        --     renderEntry (Image ("https://perdu.com") [Text "perdu"]) `shouldBe` "{\"image\":{\"url\":\"https://perdu.com\",\"alt\":[\"perdu\"]}}"
+        it "render image" $ do
+            renderEntry (Image ("https://perdu.com") (Text "perdu")) `shouldBe` "{\"image\":{\"url\":\"https://perdu.com\",\"alt\":[\"perdu\"]}}"
 
         it "render bold" $ do
             renderEntry (Bold (Text "Hello")) `shouldBe` "{\"bold\":\"Hello\"}"
