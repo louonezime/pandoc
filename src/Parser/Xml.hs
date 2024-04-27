@@ -5,19 +5,21 @@
 -- Xml
 -}
 
-module Parser.Xml (parseXml) where
+module Parser.Xml (parseXml, parseEntry) where
 
 import Control.Applicative (Alternative (..))
 import Document (Document (..), Entry (..), Header (..), defaultHeader)
 import Parsing (
-    parseSome,
-    parseNonStr,
-    parseString,
-    parseBetweenTwo,
-    parseAndWith,
+    Parser (..),
     parseBefore,
+    parseBetweenTwo,
     parseChar,
-    Parser (..))
+    parseNonStr,
+    parseSome,
+    parseString,
+    parseStringAndThen,
+    parseTillEmpty,
+ )
 
 parseAttributeValue :: Parser String
 parseAttributeValue = parseString "=\"" *> parseSome (parseNonStr "\"")
@@ -71,82 +73,120 @@ parseAuthor hdr =
         return hdr {author = Just authorRes}
 
 parseDate :: Header -> Parser Header
-parseDate hdr = parseBetweenTwo "<date>" "</date>" >>= \dateRes ->
-    return hdr { date = Just dateRes }
+parseDate hdr =
+    parseBetweenTwo "<date>" "</date>" >>= \dateRes ->
+        return hdr {date = Just dateRes}
 
 parseXml :: Parser Document
 parseXml = Parser $ \str ->
     case runParser (parseBetweenTwo "<document>\n" "</document>") str of
         Right (xs, _) -> case runParser (parseHeader defaultHeader) xs of
-            Right (hdr, ys) -> case runParser (parseContent) str of
-                Right (content, _) -> Right (Document hdr content, "")
+            Right (hdr, ys) -> case runParser parseContent ys of
+                Right (ctx, _) -> Right (Document hdr ctx, [])
                 Left err -> Left err
-                _ -> Left "Invalid XML, no content found"
             _ -> Left "Invalid XML, no header found"
         _ -> Left "Invalid XML, no document tag found"
 
-parseEntries :: [String] -> [Entry]
-parseEntries [] = []
-parseEntries (x:xs) = case runParser parseEntry x of
-    Right (entry, "") -> entry : parseEntries xs
-    _ -> parseEntries xs
-
 parseContent :: Parser [Entry]
-parseContent = Parser $ \str ->
-    case runParser (parseBefore "</header>\n") str of
-        Right (_, xs) -> case runParser (parseBetweenTwo "<body>\n" "</body>\n") xs of
-            Right (ys, _) -> parseEntries (lines ys)
-            Left err -> Left err
-        Left err -> Left err
-        _ -> Left "No body found"
+parseContent = parseTillEmpty parseEntry
+
+parseEntry :: Parser Entry
+parseEntry = parseParagraph
 
 parseParagraph :: Parser Entry
 parseParagraph =
-    Paragraph <$> (parseString "<paragraph>" *> parseBetweenTwo "" "</paragraph>")
+    Paragraph
+        <$> parseStringAndThen
+            ( parseBetweenTwo "<paragraph>\n" "</paragraph>"
+                <|> parseBetweenTwo "<paragraph>" "</paragraph>"
+            )
+            parseParagraphContent
+
+parseText :: Parser Entry
+parseText = Text <$> Parser (\s -> Right (s, []))
+
+parseParagraphContent :: Parser [Entry]
+parseParagraphContent = parseTillEmpty parseFormatElement
+
+parseFormatElement :: Parser Entry
+parseFormatElement =
+    (Text <$> parseSome (parseNonStr "<>"))
+        <|> parseBold
+        <|> parseItalic
+        <|> parseCode
+        <|> parseLink
+        <|> parseImage
+        <|> parseText
+
+parseFormat' :: Parser Entry
+parseFormat' =
+    (Text <$> parseSome (parseNonStr "<>"))
+        <|> parseBold
+        <|> parseItalic
+        <|> parseCode
+        <|> parseText
+
+parseFormat :: String -> (Entry -> Entry) -> Parser Entry
+parseFormat sep fmt =
+    parseStringAndThen
+        (parseBetweenTwo ('<' : sep) ("</" ++ sep))
+        (fmt <$> parseFormat')
 
 parseBold :: Parser Entry
-parseBold =
-    Bold <$> (parseString "<bold>" *> parseBetweenTwo "" "</bold>")
+parseBold = parseFormat "bold>" Bold
 
 parseItalic :: Parser Entry
-parseItalic =
-    Italic <$> (parseString "<italic>" *> parseBetweenTwo "" "</italic>")
+parseItalic = parseFormat "italic>" Italic
 
 parseCode :: Parser Entry
-parseCode =
-    Code <$> (parseString "<code>" *> parseBetweenTwo "" "</code>")
+parseCode = parseFormat "code>" Code
 
-parseLink :: Parser Entry
-parseLink = Parser $ \str ->
-    case runParser (parseBefore "</link>") str of
-        Right (x, _) -> case runParser (parseAttributeName "link") x of
-            Right ("url", xs) -> case runParser parseAttributeValue xs of
-                Right (y, ys) -> case runParser (parseString "\">") ys of
-                    Right (_, zs) -> Right (Link {url = y, alt = zs}, "")
-                    _ -> Left "URL field not closed properly"
-                _ -> Left "URL field invalid"
-            Right (x, _) -> Left ("Field " ++ x ++ " is invalid")
-            Left err -> Left err
+parseImageLink' :: String -> Parser String
+parseImageLink' s = Parser $ \str ->
+    case runParser (parseBefore ("</" ++ s ++ ">")) str of
+        Right (x, _) -> runParser (parseAttributeName s) x
         _ -> Left "Invalid XML, no end link found"
 
-parseImage :: Parser Entry
-parseImage = Parser $ \str ->
-    case runParser (parseBefore "</image>") str of
-        Right (x, _) -> case runParser (parseAttributeName "image") x of
-            Right ("url", xs) -> case runParser parseAttributeValue xs of
-                Right (y, ys) -> case runParser (parseString "\">") ys of
-                    Right (_, zs) -> Right (Image {url = y, alt = zs}, "")
-                    _ -> Left "URL field not closed properly"
-                _ -> Left "URL field invalid"
-            Right (x, _) -> Left ("Field " ++ x ++ " is invalid")
-            Left err -> Left err
-        _ -> Left "Invalid XML, no end image found"
+parseImageLink'' :: String -> Parser String
+parseImageLink'' "url" = parseAttributeValue
+parseImageLink'' a = Parser (\_ -> Left ("Field " ++ a ++ " is invalid"))
 
-parseEntry :: String -> Parser Entry
-parseEntry str =
-    parseParagraph str <|>
-    parseBold str <|>
-    parseItalic str <|>
-    parseCode str <|>
-    parseLink str <|>
-    parseImage str
+parseImageLink :: String -> Parser Entry -> Parser (String, Entry)
+parseImageLink s p = Parser $ \str ->
+    case runParser (parseImageLink' s) str of
+        Right (x, xs) -> case runParser (parseImageLink'' x) xs of
+            Right (y, ys) -> case runParser (parseString "\">") ys of
+                Right (_, zs) -> case runParser p zs of
+                    Right (z, zs') -> Right ((y, z), zs')
+                    Left err -> Left err
+                _ -> Left "URL field not closed properly"
+            _ -> Left "URL field invalid"
+        _ -> Left "Invalid XML, no end link found"
+
+parseLink' :: Parser Entry
+parseLink' =
+    (Text <$> parseSome (parseNonStr "<>"))
+        <|> parseBold
+        <|> parseItalic
+        <|> parseCode
+        <|> parseImage
+        <|> parseText
+
+parseLink :: Parser Entry
+parseLink =
+    uncurry Link
+        <$> parseImageLink "link" parseLink'
+
+parseImage' :: Parser Entry
+parseImage' =
+    (Text <$> parseSome (parseNonStr "<>"))
+        <|> parseBold
+        <|> parseItalic
+        <|> parseCode
+        <|> parseLink
+        <|> parseText
+
+parseImage :: Parser Entry
+parseImage =
+    uncurry Image
+        <$> parseImageLink "image" parseImage'
