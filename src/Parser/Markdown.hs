@@ -130,13 +130,7 @@ parseParagraphContent = parseTillEmpty parseFormatElement
 parseParagraph :: Parser Entry
 parseParagraph =
     Paragraph
-        <$> Parser
-            ( \s -> case runParser parseLine s of
-                Right (x, xs) -> case runParser parseParagraphContent (traceShowId x) of
-                    Right (y, _) -> Right (y, xs)
-                    Left _ -> Right ([], xs)
-                Left _ -> Left "Not a paragraph"
-            )
+        <$> parseStringAndThen parseLine parseParagraphContent
 
 parseCodeBlockDelim :: Parser String
 parseCodeBlockDelim = parseBetween "```\n"
