@@ -14,6 +14,7 @@ import Parsing (
     parseBefore,
     parseBetweenTwo,
     parseChar,
+    parseLine,
     parseNonStr,
     parseSome,
     parseString,
@@ -91,7 +92,7 @@ parseContent :: Parser [Entry]
 parseContent = parseTillEmpty parseEntry
 
 parseEntry :: Parser Entry
-parseEntry = parseParagraph
+parseEntry = parseParagraph <|> parseCodeBlock <|> parseList <|> parseSection
 
 parseParagraph :: Parser Entry
 parseParagraph =
@@ -190,3 +191,48 @@ parseImage :: Parser Entry
 parseImage =
     uncurry Image
         <$> parseImageLink "image" parseImage'
+
+parseCodeBlock :: Parser Entry
+parseCodeBlock =
+    CodeBlock
+        <$> parseStringAndThen
+            ( parseBetweenTwo
+                "<codeblock>\n"
+                "</codeblock>"
+            )
+            parseCodeBlockContent
+
+parseCodeBlockContent :: Parser [Entry]
+parseCodeBlockContent = parseTillEmpty (Text <$> parseLine)
+
+parseList :: Parser Entry
+parseList =
+    List
+        <$> parseStringAndThen
+            ( parseBetweenTwo "<list>\n" "</list>"
+                <|> parseBetweenTwo "<list>" "</list>"
+            )
+            parseContent
+
+parseSection' :: Parser String
+parseSection' = Parser $ \str ->
+    case runParser (parseBefore "</section>") str of
+        Right (x, _) -> runParser (parseAttributeName "title") x
+        _ -> Left "Invalid XML, no end link found"
+
+parseSection'' :: String -> Parser String
+parseSection'' "title" = parseAttributeValue
+parseSection'' s = Parser $ \_ -> Left ("Section field invalid " ++ s)
+
+parseSection :: Parser Entry
+parseSection =
+    uncurry Section
+        <$> Parser
+            ( \str -> case runParser parseSection' str of
+                Right (x, xs) -> case runParser (parseSection'' x) xs of
+                    Right (y, ys) -> case runParser parseContent ys of
+                        Right (z, zs) -> Right ((y, z), zs)
+                        Left err -> Left err
+                    Left err -> Left err
+                Left err -> Left err
+            )
