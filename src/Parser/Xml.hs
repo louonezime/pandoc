@@ -227,12 +227,10 @@ parseSection'' s = Parser $ \_ -> Left ("Section field invalid " ++ s)
 parseSection :: Parser Entry
 parseSection =
     uncurry Section
-        <$> Parser
-            ( \str -> case runParser parseSection' str of
-                Right (x, xs) -> case runParser (parseSection'' x) xs of
-                    Right (y, ys) -> case runParser parseContent ys of
-                        Right (z, zs) -> Right ((y, z), zs)
+        <$> Parser (\str -> case runParser parseSection' str of
+                    Right (x, xs) -> case runParser (parseSection'' x) xs of
+                        Right (y, ys) -> case runParser parseContent ys of
+                            Right (z, zs) -> Right ((y, z), zs)
+                            Left err -> Left err
                         Left err -> Left err
-                    Left err -> Left err
-                Left err -> Left err
-            )
+                    Left err -> Left err)
