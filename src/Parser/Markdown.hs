@@ -162,7 +162,7 @@ parseLink =
             )
 
 parseImage :: Parser Entry
-parseImage = do
+parseImage =
     uncurry Image
         <$> Parser
             ( \s -> case runParser parseImageAlt s of
