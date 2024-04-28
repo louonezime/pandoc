@@ -19,8 +19,9 @@ import Display.Json (renderJson)
 import Display.Markdown (renderMarkdown)
 import Display.Xml (renderXml)
 import Document (Document (..))
-import Parser.Markdown (parseMarkdown)
 import Parsing (Parser (..))
+import Parser.Markdown (parseMarkdown)
+import Parser.Xml (parseXml)
 
 data Format = Markdown | JSON | XML deriving (Show, Enum)
 
@@ -82,7 +83,8 @@ dumpPandoc Markdown = renderMarkdown
 
 parseDocument :: Format -> Parser Document
 parseDocument Markdown = parseMarkdown
-parseDocument _ = Parser $ \_ -> Left "Unimplemented"
+parseDocument XML = parseXml
+parseDocument _ = Parser $ \_ -> Left "Boo Unimplemented"
 
 --- To test the program change the [] to _
 

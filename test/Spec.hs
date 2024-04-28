@@ -15,4 +15,4 @@ main :: IO ()
 main = hspec $ do
     describe "Parser" ParserSpec.spec
     describe "JsonDisplay" JsonDisplaySpec.spec
-    describe "xml display" XmlDisplaySpec.spec
+    describe "Xml display" XmlDisplaySpec.spec
