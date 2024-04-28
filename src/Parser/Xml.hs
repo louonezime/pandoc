@@ -20,6 +20,7 @@ import Parsing (
     parseString,
     parseStringAndThen,
     parseTillEmpty,
+    parseMany,
  )
 
 parseAttributeValue :: Parser String
@@ -80,8 +81,11 @@ parseDate hdr =
     parseBetweenTwo "<date>" "</date>" >>= \dateRes ->
         return hdr {date = Just dateRes}
 
+parseSpaces :: Parser String
+parseSpaces = parseMany (parseChar ' ')
+
 parseBody :: Parser String
-parseBody = parseBetweenTwo "<body>\n" "</body>\n"
+parseBody = parseSpaces *> parseBetweenTwo "<body>\n" "</body>\n"
 
 parseXml :: Parser Document
 parseXml = Parser $ \str ->
@@ -90,13 +94,16 @@ parseXml = Parser $ \str ->
             Right (hdr, ys) -> case runParser (parseBody) ys of
                 Right (zs, _) -> case runParser parseContent zs of
                     Right (ctx, _) -> Right (Document hdr ctx, [])
-                    _ -> Left ys
-                _ -> Left ys
+                    Left err1 -> Left err1
+                Left err2 -> Left err2
             Left err -> Left err
         _ -> Left "Invalid XML, no document tag found"
 
 parseContent :: Parser [Entry]
-parseContent = parseTillEmpty parseEntry
+parseContent = parseTillEmpty filterEntry
+
+filterEntry :: Parser Entry
+filterEntry = parseSpaces *> parseEntry <* parseSpaces
 
 parseEntry :: Parser Entry
 parseEntry = parseParagraph <|> parseCodeBlock <|> parseList <|> parseSection
