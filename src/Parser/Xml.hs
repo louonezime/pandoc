@@ -254,3 +254,73 @@ parseSection =
                     Left err -> Left err
                 Left err -> Left err
             )
+
+bInputString :: String
+bInputString = "<document>\n" ++
+    "<header title=\"Syntaxe XML\">\n" ++
+    "<author>Fornes Leo</author>\n" ++
+    "<date>2024-01-01</date>\n" ++
+    "</header>\n" ++
+    "<body>\n" ++
+    "<paragraph>This document is a simple example of the XML syntax.</paragraph>\n" ++
+    "<paragraph>Every syntax element is displayed in this document.</paragraph>\n" ++
+    "<section title=\"header 1\">\n" ++
+    "<paragraph>This is a basic paragraph with text.</paragraph>\n" ++
+    "<paragraph>This is a paragraph with <bold>bold</bold>, <italic>italic</italic> and <code>code</code> text.</paragraph>\n" ++
+    "<section title=\"header 2\">\n" ++
+    "<codeblock>\n" ++
+    "<paragraph>This is a code block.</paragraph>\n" ++
+    "</codeblock>\n" ++
+    "<list>\n" ++
+    "<paragraph>list item 1</paragraph>\n" ++
+    "<paragraph>list item 2</paragraph>\n" ++
+    "<paragraph>list item 3</paragraph>\n" ++
+    "</list>\n" ++
+    "<paragraph>This is a paragraph with a <link url=\"https://www.youtube.com/watch?v=dQw4w9WgXcQ&ab_channel=RickAstley\">link</link>.</paragraph>\n" ++
+    "<paragraph>This is a paragraph with an image<image url=\"https://cdn-images-1.medium.com/max/697/1*tsHrUKwQXG1YZX0l957ISw.png\">Text to replace image</image>.</paragraph>\n" ++
+    "<section title=\"\">\n" ++
+    "<section title=\"header 4\">\n" ++
+    "<paragraph>Every syntax element can be use separately or combined.</paragraph>\n" ++
+    "<paragraph>Think about the different possible combinations.</paragraph>\n" ++
+    "<paragraph>All combined syntax elements aren't displayed in this document.</paragraph>\n" ++
+    "</section>\n" ++
+    "</section>\n" ++
+    "</section>\n" ++
+    "</section>\n" ++
+    "</body>\n" ++
+    "</document>"
+
+inputString :: String
+inputString = "<document>\n" ++
+    "    <header title=\"Syntaxe XML\">\n" ++
+    "        <author>Fornes Leo</author>\n" ++
+    "        <date>2024-01-01</date>\n" ++
+    "    </header>\n" ++
+    "    <body>\n" ++
+    "        <paragraph>This document is a simple example of the XML syntax.</paragraph>\n" ++
+    "        <paragraph>Every syntax element is displayed in this document.</paragraph>\n" ++
+    "        <section title=\"header 1\">\n" ++
+    "            <paragraph>This is a basic paragraph with text.</paragraph>\n" ++
+    "            <paragraph>This is a paragraph with <bold>bold</bold>, <italic>italic</italic> and <code>code</code> text.</paragraph>\n" ++
+    "            <section title=\"header 2\">\n" ++
+    "                <codeblock>\n" ++
+    "                    <paragraph>This is a code block.</paragraph>\n" ++
+    "                </codeblock>\n" ++
+    "                <list>\n" ++
+    "                    <paragraph>list item 1</paragraph>\n" ++
+    "                    <paragraph>list item 2</paragraph>\n" ++
+    "                    <paragraph>list item 3</paragraph>\n" ++
+    "                </list>\n" ++
+    "                <paragraph>This is a paragraph with a <link url=\"https://www.youtube.com/watch?v=dQw4w9WgXcQ&ab_channel=RickAstley\">link</link>.</paragraph>\n" ++
+    "                <paragraph>This is a paragraph with an image<image url=\"https://cdn-images-1.medium.com/max/697/1*tsHrUKwQXG1YZX0l957ISw.png\">Text to replace image</image>.</paragraph>\n" ++
+    "                <section title=\"\">\n" ++
+    "                    <section title=\"header 4\">\n" ++
+    "                        <paragraph>Every syntax element can be use separately or combined.</paragraph>\n" ++
+    "                        <paragraph>Think about the different possible combinations.</paragraph>\n" ++
+    "                        <paragraph>All combined syntax elements aren't displayed in this document.</paragraph>\n" ++
+    "                    </section>\n" ++
+    "                </section>\n" ++
+    "            </section>\n" ++
+    "        </section>\n" ++
+    "    </body>\n" ++
+    "</document>"
