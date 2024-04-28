@@ -250,6 +250,3 @@ parseSection =
                     Left err -> Left err
                 Left err -> Left err
             )
-
-inputString :: String
-inputString = "    <body>\n        <paragraph>\n            <bold>hello</bold> world\n        </paragraph>\n<list>\n<paragraph>\n<bold>hello</bold> world\n</paragraph>\n<paragraph>\n<bold>hello</bold> world\n</paragraph>\n</list>\n<codeblock>\nhello\nworld\n</codeblock>\n<section title=\"hello\">\n<paragraph>\n<bold>hello</bold> world\n</paragraph>\n</section>\n    </body>\n"
