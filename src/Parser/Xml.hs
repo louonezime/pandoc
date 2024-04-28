@@ -123,7 +123,10 @@ parseText :: Parser Entry
 parseText = Text <$> Parser (\s -> Right (s, []))
 
 parseParagraphContent :: Parser [Entry]
-parseParagraphContent = parseTillEmpty parseFormatElement
+parseParagraphContent = parseTillEmpty filterFormatElement
+
+filterFormatElement :: Parser Entry
+filterFormatElement = parseSpaces *> parseFormatElement <* parseSpaces
 
 parseFormatElement :: Parser Entry
 parseFormatElement =
