@@ -80,11 +80,14 @@ parseDate hdr =
     parseBetweenTwo "<date>" "</date>" >>= \dateRes ->
         return hdr {date = Just dateRes}
 
+parseBody :: Parser String
+parseBody = parseBetweenTwo "<body>\n" "</body>\n"
+
 parseXml :: Parser Document
 parseXml = Parser $ \str ->
     case runParser (parseBetweenTwo "<document>\n" "</document>") str of
         Right (xs, _) -> case runParser (parseHeader defaultHeader) xs of
-            Right (hdr, ys) -> case runParser (parseBetweenTwo "<body>\n" "</body>") ys of
+            Right (hdr, ys) -> case runParser (parseBody) ys of
                 Right (zs, _) -> case runParser parseContent zs of
                     Right (ctx, _) -> Right (Document hdr ctx, [])
                     _ -> Left ys
