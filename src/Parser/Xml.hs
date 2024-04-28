@@ -40,7 +40,7 @@ parseHeader :: Header -> Parser Header
 parseHeader hdr = Parser $ \str ->
     case runParser (parseTitle hdr) str of
         Right (l, xs) -> case runParser (parseBefore "</header>\n") xs of
-            Right (x, _) -> Right (parseHeaderTags (lines x) l, "")
+            Right (x, ys) -> Right (parseHeaderTags (lines x) l, ys)
             _ -> Left "Header incomplete"
         Left err -> Left err
 
@@ -82,8 +82,10 @@ parseXml :: Parser Document
 parseXml = Parser $ \str ->
     case runParser (parseBetweenTwo "<document>\n" "</document>") str of
         Right (xs, _) -> case runParser (parseHeader defaultHeader) xs of
-            Right (hdr, ys) -> case runParser parseContent ys of
-                Right (ctx, _) -> Right (Document hdr ctx, [])
+            Right (hdr, ys) -> case runParser (parseBetweenTwo "<body>\n" "</body>\n") ys of
+                Right (_, zs) -> case runParser parseContent zs of
+                    Right (ctx, _) -> Right (Document hdr ctx, [])
+                    Left err -> Left err
                 Left err -> Left err
             _ -> Left "Invalid XML, no header found"
         _ -> Left "Invalid XML, no document tag found"
@@ -234,3 +236,8 @@ parseSection =
                             Left err -> Left err
                         Left err -> Left err
                     Left err -> Left err)
+
+-- inputString :: String
+-- inputString = "<document>\n\t<header title=\"Syntaxe XML\">\n\t\t<author>Fornes Leo</author>\n\t\t<date>2024-01-01</date>\n\t</header>\n\t<body>\n\t\t<paragraph>This document is a simple example of the XML syntax.</paragraph>\n\t\t<paragraph>Every syntax element is displayed in this document.</paragraph>\n\t\t<section title=\"header 1\">\n\t\t\t<paragraph>This is a basic paragraph with text.</paragraph>\n\t\t\t<paragraph>This is a paragraph with <bold>bold</bold>, <italic>italic</italic> and <code>code</code> text.</paragraph>\n\t\t\t<section title=\"header 2\">\n\t\t\t\t<codeblock>\n\t\t\t\t\t<paragraph>This is a code block.</paragraph>\n\t\t\t\t</codeblock>\n\t\t\t\t<list>\n\t\t\t\t\t<paragraph>list item 1</paragraph>\n\t\t\t\t\t<paragraph>list item 2</paragraph>\n\t\t\t\t\t<paragraph>list item 3</paragraph>\n\t\t\t\t</list>\n\t\t\t\t<paragraph>This is a paragraph with a <link url=\"https://www.youtube.com/watch?v=dQw4w9WgXcQ&ab_channel=RickAstley\">link</link>.</paragraph>\n\t\t\t\t<paragraph>This is a paragraph with an image<image url=\"https://cdn-images-1.medium.com/max/697/1*tsHrUKwQXG1YZX0l957ISw.png\">Text to replace image</image>.</paragraph>\n\t\t\t\t<section title=\"\">\n\t\t\t\t\t<section title=\"header 4\">\n\t\t\t\t\t\t<paragraph>Every syntax element can be use separately or combined.</paragraph>\n\t\t\t\t\t\t<paragraph>Think about the different possible combinations.</paragraph>\n\t\t\t\t\t\t<paragraph>All combined syntax elements aren't displayed in this document.</paragraph>\n\t\t\t\t\t</section>\n\t\t\t\t</section>\n\t\t\t</section>\n\t\t</section>\n\t</body>\n\t</document>"
+inputString :: String
+inputString = "<document>\n<header title=\"Syntaxe XML\">\n<author>Fornes Leo</author>\n<date>2024-01-01</date>\n</header>\n<body>\n<paragraph>This document is a simple example of the XML syntax.</paragraph>\n<paragraph>Every syntax element is displayed in this document.</paragraph>\n<section title=\"header 1\">\n<paragraph>This is a basic paragraph with text.</paragraph>\n<paragraph>This is a paragraph with <bold>bold</bold>, <italic>italic</italic> and <code>code</code> text.</paragraph>\n<section title=\"header 2\">\n<codeblock>\n<paragraph>This is a code block.</paragraph>\n</codeblock>\n<list>\n<paragraph>list item 1</paragraph>\n<paragraph>list item 2</paragraph>\n<paragraph>list item 3</paragraph>\n</list>\n<paragraph>This is a paragraph with a <link url=\"https://www.youtube.com/watch?v=dQw4w9WgXcQ&ab_channel=RickAstley\">link</link>.</paragraph>\n<paragraph>This is a paragraph with an image<image url=\"https://cdn-images-1.medium.com/max/697/1*tsHrUKwQXG1YZX0l957ISw.png\">Text to replace image</image>.</paragraph>\n<section title=\"\">\n<section title=\"header 4\">\n<paragraph>Every syntax element can be use separately or combined.</paragraph>\n<paragraph>Think about the different possible combinations.</paragraph>\n<paragraph>All combined syntax elements aren't displayed in this document.</paragraph>\n</section>\n</section>\n</section>\n</section>\n</body>\n</document>"

@@ -37,20 +37,20 @@ renderTitle s = '"' : s ++ "\""
 
 renderAuthor :: Maybe String -> String
 renderAuthor Nothing = ""
-renderAuthor (Just s) = "\t<author>" ++ s ++ "</author>\n"
+renderAuthor (Just s) = "\t\t<author>" ++ s ++ "</author>\n"
 
 renderDate :: Maybe String -> String
 renderDate Nothing = ""
-renderDate (Just s) = "\t<date>" ++ s ++ "</date>\n"
+renderDate (Just s) = "\t\t<date>" ++ s ++ "</date>\n"
 
 renderHeader :: Header -> String
 renderHeader (Header t a d) =
-    "<header title="
+    "\n\t<header title="
         ++ renderTitle t
-        ++ ">\t"
+        ++ ">\n"
         ++ renderAuthor a
         ++ renderDate d
-        ++ "</header>\n"
+        ++ "\t</header>\n"
 
 renderBody :: [Entry] -> String
 renderBody arr =
