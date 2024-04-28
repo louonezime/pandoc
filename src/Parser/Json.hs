@@ -14,18 +14,15 @@ import Data.List
 
 parseJsonEntry :: Parser Entry
 parseJsonEntry = (optional (parseSeparators) *>
-    (parseJsonString <|> parseJsonObject <|> parseJsonArray <|>
-    parseJsonFormat "\"bold\"" <|> parseJsonFormat "\"italic\"" <|>
-    parseJsonFormat "\"code\"" <|> parseJsonEntryArray "\"codeblock\""
-    <|> parseJsonEntryArray "\"list\"" <|>
-    parseJsonEntryArray "\"paragraph\"") <*
+    (parseJsonString <|> parseJsonArray <|> parseJsonSection <|>
+    parseJsonFormat "\"bold\"" <|>
+    parseJsonFormat "\"italic\"" <|> parseJsonFormat "\"code\"" <|> 
+    parseJsonList <|> parseJsonCodeBlock <|> parseJsonParagraph
+    <|> parseJsonImage <|> parseJsonLink) <*
     optional (parseSeparators) <* optional (parseChar ','))
 
 parseJsonEntries :: Parser [Entry]
-parseJsonEntries = Parser $ \s -> case runParser
-    (parseSome parseJsonEntry) s of
-        Right (x, str) -> Right (x, str) 
-        Left e -> Left e
+parseJsonEntries = parseTillEmpty parseJsonEntry
 
 parseJsonString :: Parser Entry
 parseJsonString = Parser $ \s -> case runParser parseQuotes s of
@@ -66,7 +63,8 @@ parseKeyValue = optional (parseSeparators) *>
 parseJsonHeader :: Header -> Parser Header
 parseJsonHeader header = Parser $ \s -> case runParser
     (parseJsonHeaderKey header) s of
-        Right (x, str) -> Right (parseJsonHeaderTags header str, str)
+        Right (x, str) -> Right (parseJsonHeaderTags header str, 
+            parseJsonHeaderContent str)
         Left e -> Left e
 
 parseJsonHeaderKey :: Header -> Parser String
@@ -81,6 +79,13 @@ parseJsonHeaderTags header str = case runParser (parseJsonDateTag header
     <|> parseJsonAuthorTag header <|> parseJsonTitleTag header) str of
         Right (x, xs) -> parseJsonHeaderTags x xs
         _ -> header
+
+parseJsonHeaderContent :: String -> String
+parseJsonHeaderContent s = case runParser (optional (parseSeparators)
+    *> parseChar '{' *>
+    parseJsonObjectContent <* parseChar '}') s of
+        Right (x, xs) -> xs
+        Left e -> ":"
 
 parseJsonTag :: String -> Parser (String, Char)
 parseJsonTag tag = optional (parseSeparators) *>
@@ -125,7 +130,7 @@ parseJsonFormatObject "\"code\"" = Parser $ \s -> case runParser
     <* parseChar '}') s of
     Right ((key, val), str) -> Right (Code { code = val } , str)
     Left e -> Left e
-parseJsonFormatObject _ = error "invalid format"
+parseJsonFormatObject s = Parser $ \_ -> Left ("Invalid format field " ++ s)
 
 parseJsonFormatContent :: String -> Parser (String, Entry)
 parseJsonFormatContent format = (optional (parseSeparators) *>
@@ -142,42 +147,113 @@ parseJsonSection :: Parser Entry
 parseJsonSection = Parser $ \s -> case runParser
     (parseJsonObjectKey "\"section\"") s of
         Right (_, str) -> case runParser
-            (parseJsonSectionTitle) str of
+            (parseJsonFieldString "\"title\"") str of
                 Right (title, str2) -> runParser
                     (parseJsonSectionContent title) str2
                 Left e -> Left e
         Left e -> Left e
 
-parseJsonSectionTitle :: Parser Entry
-parseJsonSectionTitle = parseJsonTag "\"title\""
+parseJsonFieldString :: String -> Parser Entry
+parseJsonFieldString key = parseJsonTag key
     >>= \(x, _) -> optional (parseSeparators) *> parseJsonString
     >>= \(y) -> return y
 
-parseJsonSectionContentValue :: Parser Entry
-parseJsonSectionContentValue = (parseChar ',') *> parseJsonTag "\"content\""
+parseJsonField :: String -> Parser Entry
+parseJsonField field = (parseChar ',') *> parseJsonTag field
     >>= \(x, _) -> optional (parseSeparators) *> parseJsonEntry <*
     optional (parseSeparators) >>= \(y) -> return y
 
 parseJsonSectionContent :: Entry -> Parser Entry
 parseJsonSectionContent title = Parser $ \str -> case runParser
-    (parseJsonSectionContentValue) str of
-        Right (content, str2) -> Right ((Section {
+    (parseJsonField "\"content\"") str of
+        Right (contentValue, str2) -> Right ((Section {
             sectionTitle = txt title,
-            content = content:[] }), str2)
+            content = contentValue:[] }), str2)
         Left e -> Left e
 
-parseJsonEntryArray :: String -> Parser Entry
-parseJsonEntryArray key = Parser $ \s -> case runParser
-    (parseJsonObjectKey key) s of
+parseJsonCodeBlock :: Parser Entry
+parseJsonCodeBlock = Parser $ \s -> case runParser
+    (parseJsonObjectKey "\"codeblock\"") s of
         Right (_, str) -> case runParser (parseJsonArray) str of
-            Right (res, str2) -> Right (res, str2)
+            Right (res, str2) -> Right (CodeBlock { 
+                content = res:[] }, str2)
             Left e -> Left e
         Left e -> Left e
+
+parseJsonList :: Parser Entry
+parseJsonList = Parser $ \s -> case runParser
+    (parseJsonObjectKey "\"list\"") s of
+        Right (_, str) -> case runParser (parseJsonArray) str of
+            Right (res, str2) -> Right (List { 
+                content = res:[] }, str2)
+            Left e -> Left e
+        Left e -> Left e
+
+parseJsonParagraph :: Parser Entry
+parseJsonParagraph = Parser $ \s -> case runParser
+    (parseJsonObjectKey "\"paragraph\"") s of
+        Right (_, str) -> case runParser (parseJsonArray) str of
+            Right (res, str2) -> Right (Paragraph { 
+                content = res:[] }, str2)
+            Left e -> Left e
+        Left e -> Left e
+
 
 parseJsonObjectKey :: String -> Parser (String, Char)
 parseJsonObjectKey key = (optional (parseSeparators) *> 
     parseChar '{' *> optional (parseSeparators) *>
-    parseAnd (parseAfter key <* optional (parseSeparators)
-    <* optional (parseSeparators)) (parseChar ':'))
+    parseAnd (parseAfter key <* optional (parseSeparators))
+    (parseChar ':'))
+    
+parseJsonImage :: Parser Entry
+parseJsonImage = Parser $ \s -> case runParser
+    (parseJsonObjectKey "\"image\"") s of
+        Right (_, str) -> case runParser
+            (parseJsonFieldString "\"url\"") str of
+                Right (url, str2) -> runParser
+                    (parseJsonImageAlt url) str2
+                Left e -> Left e
+        Left e -> Left e
 
 
+parseJsonLink :: Parser Entry
+parseJsonLink = Parser $ \s -> case runParser
+    (parseJsonObjectKey "\"link\"") s of
+        Right (_, str) -> case runParser
+            (parseJsonFieldString "\"url\"") str of
+                Right (url, str2) -> runParser
+                    (parseJsonLinkContent url) str2
+                Left e -> Left e
+        Left e -> Left e
+
+parseJsonLinkContent :: Entry -> Parser Entry
+parseJsonLinkContent urlValue = Parser $ \str -> case runParser
+    (parseJsonField "\"content\"") str of
+        Right (altValue, str2) -> Right (Link { url = txt urlValue,
+        alt = altValue }, str2)
+        Left e -> Left e
+
+parseJsonImageAlt :: Entry -> Parser Entry
+parseJsonImageAlt urlValue = Parser $ \str -> case runParser
+    (parseJsonField "\"alt\"") str of
+        Right (altValue, str2) -> Right (Image { url = txt urlValue,
+        alt = altValue }, str2)
+        Left e -> Left e
+
+parseJson :: Parser Document
+parseJson = Parser $ \str ->
+    case runParser (parseJsonHeader defaultHeader) str of
+        Right (header, xs) -> case runParser parseJsonBody xs of
+            Right (_, ys) -> case runParser parseJsonEntries ys of
+                Right (content, zs) -> Right
+                    (Document header content, [])
+                Left e -> Left e
+            Left e -> Left "Invalid JSON, no body found"
+        Left e -> Left "Invalid JSON, no header found"
+
+parseJsonBody :: Parser (String, Char)
+parseJsonBody = (optional (parseSeparators) *> parseChar ',' 
+    *> optional (parseSeparators) *>
+    parseAnd (parseAfter "\"body\""
+    <* optional (parseSeparators)) (parseChar ':' *> 
+    optional (parseSeparators) *> parseChar '['))
