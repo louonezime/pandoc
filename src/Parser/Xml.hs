@@ -85,8 +85,9 @@ parseSpaces :: Parser String
 parseSpaces = parseMany (parseChar ' ')
 
 parseBody :: Parser String
-parseBody = parseSpaces *> parseBetweenTwo "<body>\n" "</body>\n" <* parseSpaces
-    <|> parseSpaces *> parseBetweenTwo "<body>" "</body>\n"
+parseBody =
+    parseSpaces *> parseBetweenTwo "<body>\n" "</body>\n" <* parseSpaces
+        <|> parseSpaces *> parseBetweenTwo "<body>" "</body>\n" <* parseSpaces
 
 parseXml :: Parser Document
 parseXml = Parser $ \str ->
