@@ -5,7 +5,7 @@
 -- pandoc
 --}
 
-module Json where
+module Parser.Json where
 
 import Parsing
 import Document
@@ -18,7 +18,7 @@ parseJsonEntry = (optional (parseSeparators) *>
     parseJsonFormat "\"bold\"" <|>
     parseJsonFormat "\"italic\"" <|> parseJsonFormat "\"code\"" <|> 
     parseJsonList <|> parseJsonCodeBlock <|> parseJsonParagraph
-    <|> parseJsonImage <|> parseJsonLink) <*
+    <|> parseJsonLink <|> parseJsonImage) <*
     optional (parseSeparators) <* optional (parseChar ','))
 
 parseJsonEntries :: Parser [Entry]
@@ -159,7 +159,7 @@ parseJsonFieldString key = parseJsonTag key
     >>= \(y) -> return y
 
 parseJsonField :: String -> Parser Entry
-parseJsonField field = (parseChar ',') *> parseJsonTag field
+parseJsonField field = (optional (parseChar ',')) *> parseJsonTag field
     >>= \(x, _) -> optional (parseSeparators) *> parseJsonEntry <*
     optional (parseSeparators) >>= \(y) -> return y
 
