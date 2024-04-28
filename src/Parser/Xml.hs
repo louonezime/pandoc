@@ -85,8 +85,8 @@ parseSpaces :: Parser String
 parseSpaces = parseMany (parseChar ' ')
 
 parseBody :: Parser String
-parseBody = parseSpaces *> parseBetweenTwo "<body>\n" "</body>\n"
-    <|> parseSpaces *> parseBetweenTwo "<body>" "    </body>\n"
+parseBody = parseSpaces *> parseBetweenTwo "<body>\n" "</body>\n" <* parseSpaces
+    <|> parseSpaces *> parseBetweenTwo "<body>" "</body>\n"
 
 parseXml :: Parser Document
 parseXml = Parser $ \str ->
@@ -250,3 +250,6 @@ parseSection =
                     Left err -> Left err
                 Left err -> Left err
             )
+
+inputString :: String
+inputString = "    <body>\n        <paragraph>\n            <bold>hello</bold> world\n        </paragraph>\n<list>\n<paragraph>\n<bold>hello</bold> world\n</paragraph>\n<paragraph>\n<bold>hello</bold> world\n</paragraph>\n</list>\n<codeblock>\nhello\nworld\n</codeblock>\n<section title=\"hello\">\n<paragraph>\n<bold>hello</bold> world\n</paragraph>\n</section>\n    </body>\n"
