@@ -19,15 +19,10 @@ import Display.Json (renderJson)
 import Display.Markdown (renderMarkdown)
 import Display.Xml (renderXml)
 import Document (Document (..))
-<<<<<<< HEAD
-=======
-import Parser.Markdown (parseMarkdown)
 import Parser.Json (parseJson)
-import Parser.Xml (parseXml)
->>>>>>> 6af4915 (feat: call parseXml and parseJson in parseDocument)
-import Parsing (Parser (..))
 import Parser.Markdown (parseMarkdown)
 import Parser.Xml (parseXml)
+import Parsing (Parser (..))
 
 data Format = Markdown | JSON | XML deriving (Show, Enum)
 
