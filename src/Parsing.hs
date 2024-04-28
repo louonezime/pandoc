@@ -37,7 +37,6 @@ module Parsing (
 
 import Control.Applicative (Alternative (..))
 import Data.List (isPrefixOf)
-import Debug.Trace (traceShowId)
 
 newtype Parser a = Parser
     { runParser :: String -> Either String (a, String)
