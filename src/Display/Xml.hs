@@ -25,130 +25,107 @@ module Display.Xml (
 
 import Document (Document (..), Entry (..), Header (..))
 
-tab :: Int -> String
-tab n = replicate n '\t'
-
 renderXml :: Document -> String
 renderXml (Document hd bdy) =
-    "<document>" ++ renderHeader hd ++ renderBody bdy ++ "</document>\n"
+    "<document>" ++ renderHeader hd ++ renderBody bdy ++ "</document>"
 
 renderTitle :: String -> String
 renderTitle s = '"' : s ++ "\""
 
 renderAuthor :: Maybe String -> String
 renderAuthor Nothing = ""
-renderAuthor (Just s) = "\t<author>" ++ s ++ "</author>\n"
+renderAuthor (Just s) = "<author>" ++ s ++ "</author>"
 
 renderDate :: Maybe String -> String
 renderDate Nothing = ""
-renderDate (Just s) = "\t<date>" ++ s ++ "</date>\n"
+renderDate (Just s) = "<date>" ++ s ++ "</date>"
 
 renderHeader :: Header -> String
 renderHeader (Header t a d) =
     "<header title="
         ++ renderTitle t
-        ++ ">\t"
+        ++ ">"
         ++ renderAuthor a
         ++ renderDate d
-        ++ "</header>\n"
+        ++ "</header>"
 
 renderBody :: [Entry] -> String
 renderBody arr =
-    tab 1
-        ++ "<body>\n"
-        ++ renderElems arr 1
-        ++ tab 1
-        ++ "</body>\n"
+    "<body>"
+        ++ renderElems arr
+        ++ "</body>"
 
-renderElems :: [Entry] -> Int -> String
-renderElems elems n = concatMap (renderElem n) elems
+renderElems :: [Entry] -> String
+renderElems = concatMap renderElem
 
-renderBold :: Int -> Entry -> String
-renderBold n (Bold s) =
-    tab n
-        ++ "<bold>\n"
-        ++ renderElem (n + 1) s
-        ++ tab n
-        ++ "</bold>\n"
+renderBold :: Entry -> String
+renderBold (Bold s) =
+    "<bold>"
+        ++ renderElem s
+        ++ "</bold>"
 
-renderItalic :: Int -> Entry -> String
-renderItalic n (Italic s) =
-    tab n
-        ++ "<italic>\n"
-        ++ renderElem (n + 1) s
-        ++ tab n
-        ++ "</italic>\n"
+renderItalic :: Entry -> String
+renderItalic (Italic s) =
+    "<italic>"
+        ++ renderElem s
+        ++ "</italic>"
 
-renderCode :: Int -> Entry -> String
-renderCode n (Code s) =
-    tab n
-        ++ "<code>\n"
-        ++ renderElem (n + 1) s
-        ++ tab n
-        ++ "</code>\n"
+renderCode :: Entry -> String
+renderCode (Code s) =
+    "<code>"
+        ++ renderElem s
+        ++ "</code>"
 
-renderList :: Int -> Entry -> String
-renderList n (List arr) =
-    tab n
-        ++ "<list>\n"
-        ++ renderElems arr (n + 1)
-        ++ tab n
-        ++ "</list>\n"
+renderList :: Entry -> String
+renderList (List arr) =
+    "<list>"
+        ++ renderElems arr
+        ++ "</list>"
 
-renderParagraph :: Int -> Entry -> String
-renderParagraph n (Paragraph arr) =
-    tab n
-        ++ "<paragraph>\n"
-        ++ renderElems arr (n + 1)
-        ++ tab n
-        ++ "</paragraph>\n"
+renderParagraph :: Entry -> String
+renderParagraph (Paragraph arr) =
+    "<paragraph>"
+        ++ renderElems arr
+        ++ "</paragraph>"
 
-renderImage :: Int -> Entry -> String
-renderImage n (Image l t) =
-    tab n
-        ++ "<image url=\""
+renderImage :: Entry -> String
+renderImage (Image l t) =
+    "<image url=\""
         ++ l
         ++ "\">"
-        ++ renderElem (n + 1) t
-        ++ tab n
-        ++ "</image>\n"
+        ++ renderElem t
+        ++ "</image>"
 
-renderLink :: Int -> Entry -> String
-renderLink n (Link l t) =
-    tab n
-        ++ "<link url=\""
+renderLink :: Entry -> String
+renderLink (Link l t) =
+    "<link url=\""
         ++ l
         ++ "\">"
-        ++ renderElem (n + 1) t
-        ++ tab n
-        ++ "</link>\n"
+        ++ renderElem t
+        ++ "</link>"
 
-renderSection :: Int -> Entry -> String
-renderSection n (Section t arr) =
-    tab n
-        ++ "<section title=\""
+renderSection :: Entry -> String
+renderSection (Section t arr) =
+    "<section title=\""
         ++ t
         ++ "\">"
-        ++ renderElems arr (n + 1)
-        ++ tab n
-        ++ "</section>\n"
+        ++ renderElems arr
+        ++ "</section>"
 
-renderCodeBlock :: Int -> Entry -> String
-renderCodeBlock n (CodeBlock arr) =
-    tab n
-        ++ "<codeblock>"
-        ++ renderElems arr n
-        ++ tab (n + 1)
-        ++ "</codeblock>\n"
+renderCodeBlock :: Entry -> String
+renderCodeBlock (CodeBlock arr) =
+    "<codeblock>"
+        ++ renderElems arr
+        ++ "</codeblock>"
 
-renderElem :: Int -> Entry -> String
-renderElem _ (Text t) = t
-renderElem n x@(Bold _) = renderBold n x
-renderElem n x@(Italic _) = renderItalic n x
-renderElem n x@(Code _) = renderCode n x
-renderElem n x@(List _) = renderList n x
-renderElem n x@(Paragraph _) = renderParagraph n x
-renderElem n x@(Link _ _) = renderLink n x
-renderElem n x@(Image _ _) = renderImage n x
-renderElem n x@(Section _ _) = renderSection n x
-renderElem n x@(CodeBlock _) = renderCodeBlock n x
+renderElem :: Entry -> String
+renderElem (Text t) = t
+renderElem x@(Bold _) = renderBold x
+renderElem x@(Italic _) = renderItalic x
+renderElem x@(Code _) = renderCode x
+renderElem x@(List _) = renderList x
+renderElem x@(Paragraph _) = renderParagraph x
+renderElem x@(Link _ _) = renderLink x
+renderElem x@(Image _ _) = renderImage x
+renderElem x@(Section _ _) = renderSection x
+renderElem x@(CodeBlock _) = renderCodeBlock x

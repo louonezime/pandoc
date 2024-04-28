@@ -8,8 +8,7 @@
 module Parser.Markdown (parseMarkdown, parseBody, parseLink) where
 
 import Control.Applicative ((<|>))
-import Debug.Trace (traceShowId)
-import Document (Document (..), Entry (..), Header (..))
+import Document (Document (..), Entry (..), Header (..), defaultHeader)
 import Parsing (
     Parser (..),
     parseAfter,
@@ -26,7 +25,7 @@ import Parsing (
 
 parseMarkdown :: Parser Document
 parseMarkdown =
-    parseAndWith Document (parseHeader (Header "" Nothing Nothing)) (pure [])
+    parseAndWith Document (parseHeader defaultHeader) parseBody
 
 parseHeaderDash :: Parser String
 parseHeaderDash = parseBetween "---\n"
@@ -67,8 +66,8 @@ parseDate = parseOr (parseAfter "date: ") (parseAfter "date:")
 parseAuthor :: Parser String
 parseAuthor = parseOr (parseAfter "author: ") (parseAfter "author:")
 
-parseBody :: Parser Entry
-parseBody = parseEntry
+parseBody :: Parser [Entry]
+parseBody = parseTillEmpty parseEntry
 
 parseEntry :: Parser Entry
 parseEntry =
